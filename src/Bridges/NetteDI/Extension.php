@@ -20,6 +20,7 @@ class Extension extends CompilerExtension
 		return Expect::structure([
 			'endpoint' => Expect::string()->dynamic(),
 			'signingKey' => Expect::string()->dynamic(),
+			'autowired' => Expect::bool(true)->dynamic(),
 		]);
 	}
 
@@ -32,10 +33,12 @@ class Extension extends CompilerExtension
 			->setArguments([
 				'endpoint' => $this->config->endpoint,
 				'signingKey' => $this->config->signingKey,
-			]);
+			])
+			->setAutowired((bool) $this->config->autowired);
 
 		$builder->addDefinition($this->prefix('service'))
-			->setFactory(SdkSkeleton::class, [$client]);
+			->setFactory(SdkSkeleton::class, [$client])
+			->setAutowired((bool) $this->config->autowired);
 	}
 
 }

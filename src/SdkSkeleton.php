@@ -2,7 +2,9 @@
 
 namespace Satanio\SdkSkeleton;
 
-use Satanio\SdkSkeleton\Exceptions\ServerException;
+use Satanio\SdkSkeleton\Endpoints\ExampleEndpoint;
+use Satanio\SdkSkeleton\Endpoints\Requests\ExampleRequest;
+use Satanio\SdkSkeleton\Endpoints\Responses\ExampleResponse;
 
 class SdkSkeleton
 {
@@ -11,21 +13,9 @@ class SdkSkeleton
 	{
 	}
 
-	public function example(string $input): string
+	public function example(ExampleRequest $request): ExampleResponse
 	{
-		$response = $this->client->sendRequest('POST', 'api/v1/example', [
-			'json' => [
-				'input' => $input,
-			],
-		]);
-
-		$payload = $response['payload'] ?? null;
-
-		if (!is_array($payload) || !array_key_exists('output', $payload) || !is_string($payload['output'])) {
-			throw new ServerException('Payload error', 404);
-		}
-
-		return $payload['output'];
+		return (new ExampleEndpoint($this->client))->example($request);
 	}
 
 }

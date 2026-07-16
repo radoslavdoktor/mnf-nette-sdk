@@ -13,8 +13,8 @@ class DummyClient extends Client
 	}
 
 	/**
-	 * @param mixed[] $options
-	 * @return mixed[]
+	 * @param array<string, mixed> $options
+	 * @return array<string, mixed>
 	 */
 	public function sendRequest(string $method, string $uri, array $options = []): array
 	{

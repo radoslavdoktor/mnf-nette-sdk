@@ -7,6 +7,7 @@ use Nette\DI\Container;
 use Nette\DI\ContainerLoader;
 use Satanio\SdkSkeleton\Bridges\NetteDI\Extension;
 use Satanio\SdkSkeleton\Client;
+use Satanio\SdkSkeleton\Endpoints\Requests\ExampleRequest;
 use Satanio\SdkSkeleton\SdkSkeleton;
 use Tester\Assert;
 use Tester\FileMock;
@@ -26,7 +27,9 @@ class ExtensionCase extends TestCase
 		$client = new DummyClient();
 		$service = new SdkSkeleton($client);
 
-		Assert::same('dummy-output', $service->example('anything'));
+		$response = $service->example((new ExampleRequest())->setInput('anything'));
+
+		Assert::same('dummy-output', $response->getOutput());
 	}
 
 	public function testExtension(): void

@@ -36,7 +36,7 @@ class Client
 
 	/**
 	 * @param array<string, mixed> $options
-	 * @return array<mixed>
+	 * @return array<string, mixed>
 	 */
 	public function sendRequest(string $method, string $uri, array $options = []): array
 	{
@@ -49,7 +49,7 @@ class Client
 			$response = $this->httpClient->request($method, $uri, $options);
 
 			try {
-				/** @var array<mixed> $decoded */
+				/** @var array<string, mixed> $decoded */
 				$decoded = Json::decode($response->getBody()->getContents(), JSON_OBJECT_AS_ARRAY);
 
 				return $decoded;
