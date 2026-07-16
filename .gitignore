@@ -1,0 +1,6 @@
+/composer.lock
+/vendor
+
+/tests/**/output
+/tests/temp/*
+!/tests/temp/.gitkeep

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: php:8.4-cli
+    steps:
+      - uses: actions/checkout@v4
+      - run: apt-get update && apt-get install -y unzip git
+      - run: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+      - run: composer update --no-interaction --prefer-dist --no-progress
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vendor
+          path: vendor
+
+  phpstan:
+    needs: build
+    runs-on: ubuntu-latest
+    container: php:8.4-cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: vendor
+          path: vendor
+      - run: composer phpstan
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    container: php:8.4-cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: vendor
+          path: vendor
+      - run: composer test
+
+  release:
+    needs: [phpstan, test]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: npx --yes semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
