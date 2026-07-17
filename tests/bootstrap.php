@@ -1,9 +1,5 @@
-<?php declare(strict_types = 1);
-
-use Tester\Environment;
+<?php declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
-
-Environment::setup();
 
 define('TEMP_DIR', __DIR__ . '/temp');

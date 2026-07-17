@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Satanio\SdkSkeleton;
 
@@ -6,28 +6,29 @@ use DateTimeImmutable;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException as GuzzleClientException;
 use GuzzleHttp\Exception\ServerException as GuzzleServerException;
-use InvalidArgumentException;
+use JsonException;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\JwtFacade;
 use Lcobucci\JWT\Signer\Hmac\Sha512;
 use Lcobucci\JWT\Signer\Key\InMemory;
-use Nette\Utils\Json;
-use Nette\Utils\JsonException;
 use Satanio\SdkSkeleton\Exceptions\ClientException;
+use Satanio\SdkSkeleton\Exceptions\InvalidArgumentException;
 use Satanio\SdkSkeleton\Exceptions\ServerException;
 
 class Client
 {
-
 	private HttpClient $httpClient;
 
 	/** @var non-empty-string */
 	private string $signingKey;
 
+	/**
+	 * @throws InvalidArgumentException
+	 */
 	public function __construct(string $endpoint, string $signingKey)
 	{
 		if ($signingKey === '') {
-			throw new InvalidArgumentException('Parameter \'signingKey\' cannot be empty.');
+			throw InvalidArgumentException::emptySigningKey();
 		}
 
 		$this->httpClient = new HttpClient(['base_uri' => $endpoint]);
@@ -37,12 +38,18 @@ class Client
 	/**
 	 * @param array<string, mixed> $options
 	 * @return array<string, mixed>
+	 * @throws ClientException
+	 * @throws ServerException
 	 */
-	public function sendRequest(string $method, string $uri, array $options = []): array
+	public function sendRequest(
+		string $method,
+		string $uri,
+		array $options = [],
+	): array
 	{
 		/** @var array<string, string> $headers */
-		$headers = is_array($options['headers'] ?? null) ? $options['headers'] : [];
-		$headers['Authorization'] = sprintf('Bearer %s', $this->createAccessToken());
+		$headers = \is_array($options['headers'] ?? null) ? $options['headers'] : [];
+		$headers['Authorization'] = \sprintf('Bearer %s', $this->createAccessToken());
 		$options['headers'] = $headers;
 
 		try {
@@ -50,11 +57,11 @@ class Client
 
 			try {
 				/** @var array<string, mixed> $decoded */
-				$decoded = Json::decode($response->getBody()->getContents(), JSON_OBJECT_AS_ARRAY);
+				$decoded = \json_decode($response->getBody()->getContents(), true, 512, \JSON_THROW_ON_ERROR);
 
 				return $decoded;
 			} catch (JsonException $e) {
-				throw new ClientException($e->getMessage(), $e->getCode(), $e);
+				throw ClientException::invalidJsonResponse($e);
 			}
 		} catch (GuzzleClientException $e) {
 			throw ClientException::createFromBadResponseException($e);
@@ -75,5 +82,4 @@ class Client
 
 		return $token->toString();
 	}
-
 }

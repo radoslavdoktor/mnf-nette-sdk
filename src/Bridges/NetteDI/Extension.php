@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Satanio\SdkSkeleton\Bridges\NetteDI;
 
@@ -14,7 +14,6 @@ use stdClass;
  */
 class Extension extends CompilerExtension
 {
-
 	public function getConfigSchema(): Schema
 	{
 		return Expect::structure([
@@ -34,11 +33,10 @@ class Extension extends CompilerExtension
 				'endpoint' => $this->config->endpoint,
 				'signingKey' => $this->config->signingKey,
 			])
-			->setAutowired((bool) $this->config->autowired);
+			->setAutowired((bool)$this->config->autowired);
 
 		$builder->addDefinition($this->prefix('service'))
 			->setFactory(SdkSkeleton::class, [$client])
-			->setAutowired((bool) $this->config->autowired);
+			->setAutowired((bool)$this->config->autowired);
 	}
-
 }

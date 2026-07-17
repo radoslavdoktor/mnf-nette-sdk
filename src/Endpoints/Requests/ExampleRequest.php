@@ -1,17 +1,16 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 
 namespace Satanio\SdkSkeleton\Endpoints\Requests;
 
 class ExampleRequest implements IRequest
 {
-
-	private string $input;
-
-	public function setInput(string $input): self
+	private function __construct(private readonly string $input)
 	{
-		$this->input = $input;
+	}
 
-		return $this;
+	public static function create(string $input): self
+	{
+		return new self($input);
 	}
 
 	/**
@@ -23,5 +22,4 @@ class ExampleRequest implements IRequest
 			'input' => $this->input,
 		];
 	}
-
 }

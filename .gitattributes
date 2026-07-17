@@ -1,8 +1,13 @@
 # Not archived
 tests export-ignore
+.dockerignore export-ignore
 .editorconfig export-ignore
 .gitattributes export-ignore
 .github export-ignore
 .gitignore export-ignore
+docker-compose.yml export-ignore
+Dockerfile export-ignore
+ecs.php export-ignore
 phpstan.neon export-ignore
+phpunit.xml.dist export-ignore
 README.md export-ignore

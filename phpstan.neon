@@ -1,3 +1,8 @@
+rules:
+	- Roave\PHPStan\Rules\Floats\DisallowFloatInFunctionSignatureRule
+	- Roave\PHPStan\Rules\Floats\DisallowFloatInMethodSignatureRule
+	- Roave\PHPStan\Rules\Floats\DisallowFloatPropertyTypeRule
+
 parameters:
 	level: max
 	paths:
@@ -5,7 +10,18 @@ parameters:
 		- tests
 	fileExtensions:
 		- php
-		- phpt
 	excludePaths:
 		- tests/temp/*
 	treatPhpDocTypesAsCertain: false
+	exceptions:
+		implicitThrows: false
+		checkedExceptionClasses:
+			- Satanio\SdkSkeleton\Exceptions\Exception
+		check:
+			missingCheckedExceptionInThrows: true
+			tooWideThrowType: true
+	shipmonkRules:
+		enableAllRules: false
+		forbidCheckedExceptionInCallable:
+			allowedCheckedExceptionCallables: []
+			enabled: true

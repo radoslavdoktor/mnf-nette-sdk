@@ -1,0 +1,23 @@
+name: PHP job
+
+on:
+  workflow_call:
+    inputs:
+      script:
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    container: php:8.4-cli
+    steps:
+      - run: apt-get update && apt-get install -y unzip git
+      - run: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: vendor
+          path: vendor
+      - run: chmod -R +x vendor/bin
+      - run: composer ${{ inputs.script }}

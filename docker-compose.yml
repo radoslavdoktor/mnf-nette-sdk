@@ -1,0 +1,15 @@
+# Tooling container only, nothing to keep up long-running — use `run --rm`, not `up -d` + `exec`:
+#   docker compose run --rm php composer install
+#   docker compose run --rm php vendor/bin/ecs --config=ecs.php --fix
+#   docker compose run --rm php vendor/bin/phpstan analyse
+#   docker compose run --rm php vendor/bin/phpunit
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: "8.4"
+    working_dir: /app
+    volumes:
+      - .:/app
