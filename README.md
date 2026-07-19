@@ -1,14 +1,13 @@
-# SDK Skeleton
+# MNF Nette SDK
 
-Skeleton for Satanio PHP SDKs: a Guzzle-based HTTP client with JWT (HMAC-SHA512) bearer auth,
-a typed exception hierarchy, a layered endpoint/request/response structure, and an optional
-Nette DI bridge.
+A Guzzle-based HTTP client for the MNF API, with JWT (EdDSA/Ed25519) bearer auth, a typed
+exception hierarchy, a layered endpoint/request/response structure, and an optional Nette DI
+bridge.
 
-Rename `Satanio\SdkSkeleton\SdkSkeleton` to your actual domain service, and replace
-`Endpoints\ExampleEndpoint` (plus its `ExampleRequest`/`ExampleResponse`) with your real
-endpoints, following the same pattern:
+Replace the placeholder `Endpoints\ExampleEndpoint` (plus its `ExampleRequest`/`ExampleResponse`)
+with real MNF endpoints, following the same pattern:
 
-- `SdkSkeleton` is a thin facade — one method per SDK operation, each delegating to an endpoint.
+- `MnfSdk` is a thin facade — one method per SDK operation, each delegating to an endpoint.
 - Each endpoint extends `Endpoints\BaseEndpoint` and holds the `Client`.
 - Each request implements `Endpoints\Requests\IRequest` (`toArray(): array`), has a private
   constructor, and is built via a named static factory (e.g. `ExampleRequest::create(...)`).
@@ -20,8 +19,8 @@ Point `Client::sendRequest()` calls at your real endpoints.
 ## Installation
 
 ```shell
-composer config repositories.satanio/nette-sdk-skeleton-sdk vcs https://github.com/satanio/nette-sdk-skeleton-sdk
-composer require satanio/nette-sdk-skeleton-sdk
+composer config repositories.vilgain/mnf-nette-sdk vcs https://github.com/radoslavdoktor/mnf-nette-sdk
+composer require vilgain/mnf-nette-sdk
 ```
 
 ## Configuration
@@ -30,34 +29,36 @@ Register the extension in your Nette DI config:
 
 ```neon
 extensions:
-    sdkSkeleton: Satanio\SdkSkeleton\Bridges\NetteDI\Extension
+    mnfSdk: Mnf\NetteSdk\Bridges\NetteDI\Extension
 
-sdkSkeleton:
+mnfSdk:
     endpoint: https://your-api.com
-    signingKey: your-hmac-secret
+    privateKey: '%env.MNF_JWT_PRIVATE_KEY%'
 ```
 
 - `endpoint` — base URL of the API
-- `signingKey` — shared HMAC secret used to sign JWT requests
-- `autowired` — whether the `Client` and `SdkSkeleton` services are autowired (default `true`);
+- `privateKey` — base64-encoded Ed25519 private key used to sign JWT requests; the MNF API
+  verifies signatures against the corresponding public key, so only this key's holder can
+  authenticate — never commit it, keep it in your secrets store
+- `autowired` — whether the `Client` and `MnfSdk` services are autowired (default `true`);
   set to `false` when registering more than one SDK extension to avoid autowiring ambiguity
 
-Both `endpoint` and `signingKey` support environment variable resolution via `%env.VAR%`.
+Both `endpoint` and `privateKey` support environment variable resolution via `%env.VAR%`.
 
 Without Nette DI, construct the client directly:
 
 ```php
-$client = new Satanio\SdkSkeleton\Client('https://your-api.com', 'your-hmac-secret');
-$sdk = new Satanio\SdkSkeleton\SdkSkeleton($client);
+$client = new Mnf\NetteSdk\Client('https://your-api.com', $privateKey);
+$sdk = new Mnf\NetteSdk\MnfSdk($client);
 ```
 
 ## Usage
 
 ```php
 /** @inject */
-public Satanio\SdkSkeleton\SdkSkeleton $sdk;
+public Mnf\NetteSdk\MnfSdk $sdk;
 
-$request = Satanio\SdkSkeleton\Endpoints\Requests\ExampleRequest::create('some input');
+$request = Mnf\NetteSdk\Endpoints\Requests\ExampleRequest::create('some input');
 
 $response = $this->sdk->example($request);
 
@@ -68,19 +69,21 @@ $output = $response->getOutput();
 
 | Exception | When |
 |---|---|
-| `Satanio\SdkSkeleton\Exceptions\ClientException` | 4xx response or malformed JSON |
-| `Satanio\SdkSkeleton\Exceptions\ServerException` | 5xx response or missing payload keys |
-| `Satanio\SdkSkeleton\Exceptions\InvalidArgumentException` | invalid constructor arguments (e.g. empty `signingKey`) |
+| `Mnf\NetteSdk\Exceptions\ClientException` | 4xx response or malformed JSON |
+| `Mnf\NetteSdk\Exceptions\ServerException` | 5xx response or missing payload keys |
+| `Mnf\NetteSdk\Exceptions\InvalidArgumentException` | invalid constructor arguments (e.g. empty `privateKey`) |
 
-`ClientException` and `ServerException` both expose `getContext(): mixed` with additional error
-detail parsed from the API response. All three share named static factories (e.g.
-`ServerException::payloadError()`, `InvalidArgumentException::emptySigningKey()`) instead of
-public constructors — build them through those, not `new`.
+`ClientException` and `ServerException` both expose `getContext(): mixed`, populated with the
+first entry of the error response's `error` array (see below). All three share named static
+factories (e.g. `ServerException::payloadError()`, `InvalidArgumentException::emptyPrivateKey()`)
+instead of public constructors — build them through those, not `new`.
 
 HTTP status codes used by these factories are defined on the `Exceptions\HttpStatusCode` enum.
 
-Server responses are expected in the envelope `{ "payload": { ... } }`, and errors as
-`{ "message": "...", "context": <any> }`.
+Successful responses are the bare response DTO at the top level (no envelope) — e.g.
+`{ "id": "...", "name": "..." }` or, for list endpoints, `{ "items": [...] }`. Error responses
+use `{ "error": [{ "message": "...", "path"?: "...", "code"?: "..." }] }` — `error` is always an
+array; only the first entry is surfaced.
 
 ## Local development
 

@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Satanio\SdkSkeleton\Exceptions;
+namespace Mnf\NetteSdk\Exceptions;
 
 use GuzzleHttp\Exception\BadResponseException;
 use JsonException;
 use Throwable;
 
-class ClientException extends Exception
+class ClientException extends RuntimeException
 {
 	private function __construct(
 		string $message,

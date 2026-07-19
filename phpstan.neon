@@ -16,7 +16,7 @@ parameters:
 	exceptions:
 		implicitThrows: false
 		checkedExceptionClasses:
-			- Satanio\SdkSkeleton\Exceptions\Exception
+			- Mnf\NetteSdk\Exceptions\Exception
 		check:
 			missingCheckedExceptionInThrows: true
 			tooWideThrowType: true

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Satanio\SdkSkeleton\Endpoints;
+namespace Mnf\NetteSdk\Endpoints;
 
-use Satanio\SdkSkeleton\Client;
+use Mnf\NetteSdk\Client;
 
 abstract class BaseEndpoint
 {

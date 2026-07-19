@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Satanio\SdkSkeleton\Exceptions;
+namespace Mnf\NetteSdk\Exceptions;
 
 use Throwable;
 
-class InvalidArgumentException extends Exception
+class InvalidArgumentException extends LogicException
 {
 	private function __construct(
 		string $message,
@@ -26,8 +26,13 @@ class InvalidArgumentException extends Exception
 		return new self($message, $code, $previous, $context);
 	}
 
-	public static function emptySigningKey(): self
+	public static function emptyPrivateKey(): self
 	{
-		return new self('Parameter \'signingKey\' cannot be empty.', 0);
+		return new self('Parameter \'privateKey\' cannot be empty.', 0);
+	}
+
+	public static function invalidPrivateKey(Throwable|null $previous = null): self
+	{
+		return new self('Parameter \'privateKey\' must be a base64-encoded 64-byte Ed25519 secret key.', 0, $previous);
 	}
 }

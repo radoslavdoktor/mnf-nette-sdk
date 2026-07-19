@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Satanio\SdkSkeleton\Bridges\NetteDI;
+namespace Mnf\NetteSdk\Bridges\NetteDI;
 
+use Mnf\NetteSdk\Client;
+use Mnf\NetteSdk\MnfSdk;
 use Nette\DI\CompilerExtension;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
-use Satanio\SdkSkeleton\Client;
-use Satanio\SdkSkeleton\SdkSkeleton;
 use stdClass;
 
 /**
@@ -18,7 +18,7 @@ class Extension extends CompilerExtension
 	{
 		return Expect::structure([
 			'endpoint' => Expect::string()->dynamic(),
-			'signingKey' => Expect::string()->dynamic(),
+			'privateKey' => Expect::string()->dynamic(),
 			'autowired' => Expect::bool(true)->dynamic(),
 		]);
 	}
@@ -31,12 +31,12 @@ class Extension extends CompilerExtension
 			->setFactory(Client::class)
 			->setArguments([
 				'endpoint' => $this->config->endpoint,
-				'signingKey' => $this->config->signingKey,
+				'privateKey' => $this->config->privateKey,
 			])
 			->setAutowired((bool)$this->config->autowired);
 
 		$builder->addDefinition($this->prefix('service'))
-			->setFactory(SdkSkeleton::class, [$client])
+			->setFactory(MnfSdk::class, [$client])
 			->setAutowired((bool)$this->config->autowired);
 	}
 }

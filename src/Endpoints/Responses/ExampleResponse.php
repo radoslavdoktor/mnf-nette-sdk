@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Satanio\SdkSkeleton\Endpoints\Responses;
+namespace Mnf\NetteSdk\Endpoints\Responses;
 
-use Satanio\SdkSkeleton\Exceptions\ServerException;
+use Mnf\NetteSdk\Exceptions\ServerException;
 
 class ExampleResponse implements IResponse
 {

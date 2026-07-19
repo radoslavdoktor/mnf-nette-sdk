@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Satanio\SdkSkeleton;
+namespace Mnf\NetteSdk;
 
 use DateTimeImmutable;
 use GuzzleHttp\Client as HttpClient;
@@ -8,31 +8,43 @@ use GuzzleHttp\Exception\ClientException as GuzzleClientException;
 use GuzzleHttp\Exception\ServerException as GuzzleServerException;
 use JsonException;
 use Lcobucci\JWT\Builder;
+use Lcobucci\JWT\Exception as JwtException;
 use Lcobucci\JWT\JwtFacade;
-use Lcobucci\JWT\Signer\Hmac\Sha512;
+use Lcobucci\JWT\Signer\Eddsa;
+use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Signer\Key\InMemory;
-use Satanio\SdkSkeleton\Exceptions\ClientException;
-use Satanio\SdkSkeleton\Exceptions\InvalidArgumentException;
-use Satanio\SdkSkeleton\Exceptions\ServerException;
+use Mnf\NetteSdk\Exceptions\ClientException;
+use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
+use Mnf\NetteSdk\Exceptions\ServerException;
 
 class Client
 {
 	private HttpClient $httpClient;
 
-	/** @var non-empty-string */
-	private string $signingKey;
+	private Key $privateKey;
 
 	/**
+	 * @param string $privateKey base64-encoded Ed25519 private key
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct(string $endpoint, string $signingKey)
+	public function __construct(string $endpoint, string $privateKey)
 	{
-		if ($signingKey === '') {
-			throw InvalidArgumentException::emptySigningKey();
+		if ($privateKey === '') {
+			throw InvalidArgumentException::emptyPrivateKey();
+		}
+
+		try {
+			$key = InMemory::base64Encoded($privateKey);
+		} catch (JwtException $e) { // @phpstan-ignore catch.neverThrown (undocumented throw on invalid base64 content)
+			throw InvalidArgumentException::invalidPrivateKey($e);
+		}
+
+		if (\mb_strlen($key->contents(), '8bit') !== \SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
+			throw InvalidArgumentException::invalidPrivateKey();
 		}
 
 		$this->httpClient = new HttpClient(['base_uri' => $endpoint]);
-		$this->signingKey = $signingKey;
+		$this->privateKey = $key;
 	}
 
 	/**
@@ -75,8 +87,8 @@ class Client
 		$facade = new JwtFacade();
 
 		$token = $facade->issue(
-			new Sha512(),
-			InMemory::plainText($this->signingKey),
+			new Eddsa(),
+			$this->privateKey,
 			fn (Builder $builder) => $builder->issuedAt(new DateTimeImmutable()),
 		);
 

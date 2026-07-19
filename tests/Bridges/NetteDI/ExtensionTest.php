@@ -2,17 +2,17 @@
 
 namespace Tests\Bridges\NetteDI;
 
+use Mnf\NetteSdk\Bridges\NetteDI\Extension;
+use Mnf\NetteSdk\Client;
+use Mnf\NetteSdk\Endpoints\Requests\ExampleRequest;
+use Mnf\NetteSdk\Exceptions\ClientException;
+use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
+use Mnf\NetteSdk\Exceptions\ServerException;
+use Mnf\NetteSdk\MnfSdk;
 use Nette\DI\Compiler;
 use Nette\DI\Container;
 use Nette\DI\ContainerLoader;
 use PHPUnit\Framework\TestCase;
-use Satanio\SdkSkeleton\Bridges\NetteDI\Extension;
-use Satanio\SdkSkeleton\Client;
-use Satanio\SdkSkeleton\Endpoints\Requests\ExampleRequest;
-use Satanio\SdkSkeleton\Exceptions\ClientException;
-use Satanio\SdkSkeleton\Exceptions\InvalidArgumentException;
-use Satanio\SdkSkeleton\Exceptions\ServerException;
-use Satanio\SdkSkeleton\SdkSkeleton;
 use Tests\Stubs\Client\DummyClient;
 
 class ExtensionTest extends TestCase
@@ -25,7 +25,7 @@ class ExtensionTest extends TestCase
 	public function testService(): void
 	{
 		$client = new DummyClient();
-		$service = new SdkSkeleton($client);
+		$service = new MnfSdk($client);
 
 		$response = $service->example(ExampleRequest::create('anything'));
 
@@ -36,11 +36,11 @@ class ExtensionTest extends TestCase
 	{
 		$loader = new ContainerLoader(\TEMP_DIR, true);
 		$class = $loader->load(static function (Compiler $compiler): string|null {
-			$compiler->addExtension('sdkSkeleton', new Extension());
+			$compiler->addExtension('mnfSdk', new Extension());
 			$compiler->addConfig([
-				'sdkSkeleton' => [
+				'mnfSdk' => [
 					'endpoint' => 'http://localhost',
-					'signingKey' => 'test-signing-key',
+					'privateKey' => 'Syc1jJuyaafnDcDjxBA5nPWQyG/F4IF7brnDENdprRZmlq8bjDKCNZNJj4bTjzDAz4SXKn6niU7KaPIMj0UMcg==',
 				],
 			]);
 
@@ -50,7 +50,7 @@ class ExtensionTest extends TestCase
 		/** @var Container $container */
 		$container = new $class();
 
-		self::assertInstanceOf(Client::class, $container->getService('sdkSkeleton.client'));
-		self::assertInstanceOf(SdkSkeleton::class, $container->getService('sdkSkeleton.service'));
+		self::assertInstanceOf(Client::class, $container->getService('mnfSdk.client'));
+		self::assertInstanceOf(MnfSdk::class, $container->getService('mnfSdk.service'));
 	}
 }

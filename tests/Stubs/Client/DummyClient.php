@@ -2,8 +2,8 @@
 
 namespace Tests\Stubs\Client;
 
-use Satanio\SdkSkeleton\Client;
-use Satanio\SdkSkeleton\Exceptions\InvalidArgumentException;
+use Mnf\NetteSdk\Client;
+use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 
 class DummyClient extends Client
 {
@@ -12,7 +12,7 @@ class DummyClient extends Client
 	 */
 	public function __construct()
 	{
-		parent::__construct('http://localhost', 'dummy-signing-key');
+		parent::__construct('http://localhost', 'Syc1jJuyaafnDcDjxBA5nPWQyG/F4IF7brnDENdprRZmlq8bjDKCNZNJj4bTjzDAz4SXKn6niU7KaPIMj0UMcg==');
 	}
 
 	/**
@@ -25,6 +25,6 @@ class DummyClient extends Client
 		array $options = [],
 	): array
 	{
-		return ['payload' => ['output' => 'dummy-output']];
+		return ['output' => 'dummy-output'];
 	}
 }

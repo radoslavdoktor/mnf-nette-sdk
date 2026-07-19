@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Satanio\SdkSkeleton\Endpoints\Requests;
+namespace Mnf\NetteSdk\Endpoints\Requests;
 
 interface IRequest
 {
