@@ -25,7 +25,7 @@ class ProductionLineEndpoint extends BaseEndpoint
 		array $roles = [],
 	): GridResponse
 	{
-		return $this->getGridResponse('GET', 'api/manufacturing/production-lines', $request->toArray(), ProductionLineItem::class, $subject, $roles);
+		return $this->getGridResponse('GET', 'api/v1/manufacturing/production-lines', $request->toArray(), ProductionLineItem::class, $subject, $roles);
 	}
 
 	/**
@@ -34,7 +34,7 @@ class ProductionLineEndpoint extends BaseEndpoint
 	 */
 	public function getProductionLineFilters(): FiltersResponse
 	{
-		$response = $this->sendAuthenticatedRequest('GET', 'api/manufacturing/production-lines/filters');
+		$response = $this->sendAuthenticatedRequest('GET', 'api/v1/manufacturing/production-lines/filters');
 
 		return FiltersResponse::fromArray(ResponseList::assertArray($response->body));
 	}
