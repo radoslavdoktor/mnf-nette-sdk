@@ -4,7 +4,7 @@ namespace Mnf\NetteSdk\Endpoints\Manufacturing;
 
 use Mnf\NetteSdk\Endpoints\BaseEndpoint;
 use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLineItem;
-use Mnf\NetteSdk\Endpoints\Responses\ResponseList;
+use Mnf\NetteSdk\Endpoints\ResponseList;
 use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\FiltersResponse;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\GridResponse;

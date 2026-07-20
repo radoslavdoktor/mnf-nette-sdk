@@ -2,7 +2,7 @@
 
 namespace Mnf\NetteSdk\Endpoints\Manufacturing\Responses;
 
-use Mnf\NetteSdk\Endpoints\Responses\IResponse;
+use Mnf\NetteSdk\Endpoints\IResponse;
 use Mnf\NetteSdk\Exceptions\ServerException;
 
 class ProductionLineItem implements IResponse

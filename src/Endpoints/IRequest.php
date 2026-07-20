@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Requests;
+namespace Mnf\NetteSdk\Endpoints;
 
 interface IRequest
 {

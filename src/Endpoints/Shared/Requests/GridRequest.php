@@ -2,7 +2,7 @@
 
 namespace Mnf\NetteSdk\Endpoints\Shared\Requests;
 
-use Mnf\NetteSdk\Endpoints\Requests\IRequest;
+use Mnf\NetteSdk\Endpoints\IRequest;
 
 class GridRequest implements IRequest
 {

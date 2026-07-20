@@ -3,8 +3,6 @@
 namespace Mnf\NetteSdk\Endpoints;
 
 use Mnf\NetteSdk\Client;
-use Mnf\NetteSdk\Endpoints\Responses\IResponse;
-use Mnf\NetteSdk\Endpoints\Responses\ResponseList;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\GridResponse;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\ServerException;

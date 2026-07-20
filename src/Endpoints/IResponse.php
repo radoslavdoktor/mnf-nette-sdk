@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Responses;
+namespace Mnf\NetteSdk\Endpoints;
 
 interface IResponse
 {
