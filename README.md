@@ -4,17 +4,18 @@ A Guzzle-based HTTP client for the MNF API, with JWT (EdDSA/Ed25519) bearer auth
 exception hierarchy, a layered endpoint/request/response structure, and an optional Nette DI
 bridge.
 
-Replace the placeholder `Endpoints\ExampleEndpoint` (plus its `ExampleRequest`/`ExampleResponse`)
-with real MNF endpoints, following the same pattern:
+Endpoints are grouped by MNF domain under `Endpoints\<Domain>`, e.g. `Endpoints\Manufacturing`:
 
 - `MnfSdk` is a thin facade — one method per SDK operation, each delegating to an endpoint.
 - Each endpoint extends `Endpoints\BaseEndpoint` and holds the `Client`.
 - Each request implements `Endpoints\Requests\IRequest` (`toArray(): array`), has a private
-  constructor, and is built via a named static factory (e.g. `ExampleRequest::create(...)`).
-- Each response implements `Endpoints\Responses\IResponse` (`fromArray(array $data): self`),
-  has a private constructor, and exposes typed getters.
+  constructor, and is built via a named static factory (e.g. `GetProductionLinesRequest::create(...)`).
+- Each response has a private constructor and exposes typed getters; most implement
+  `Endpoints\Responses\IResponse` (`fromArray(array $data): self`) — a response that needs data
+  from outside the JSON body too (e.g. a header) uses a plain `create()` factory instead.
 
-Point `Client::sendRequest()` calls at your real endpoints.
+`Client::sendRequest()` returns a `Http\Response`, exposing the decoded JSON body (`->body`,
+`mixed` — a list for grid endpoints, a map otherwise) and response headers (`->getHeader(string): ?string`).
 
 ## Installation
 
@@ -58,11 +59,25 @@ $sdk = new Mnf\NetteSdk\MnfSdk($client);
 /** @inject */
 public Mnf\NetteSdk\MnfSdk $sdk;
 
-$request = Mnf\NetteSdk\Endpoints\Requests\ExampleRequest::create('some input');
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\GetProductionLinesRequest;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineFilter;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\FilterOperator;
 
-$response = $this->sdk->example($request);
+$request = GetProductionLinesRequest::create(
+    offset: 0,
+    limit: 20,
+    filters: [ProductionLineFilter::create('active', FilterOperator::Equal, '1')],
+);
 
-$output = $response->getOutput();
+$response = $this->sdk->getProductionLines($request);
+
+$totalCount = $response->getTotalCount(); // from the X-Count response header
+foreach ($response->getItems() as $item) {
+    $item->getId();
+    $item->getName();
+}
+
+$filters = $this->sdk->getProductionLineFilters();
 ```
 
 ## Exceptions
@@ -81,8 +96,9 @@ instead of public constructors — build them through those, not `new`.
 HTTP status codes used by these factories are defined on the `Exceptions\HttpStatusCode` enum.
 
 Successful responses are the bare response DTO at the top level (no envelope) — e.g.
-`{ "id": "...", "name": "..." }` or, for list endpoints, `{ "items": [...] }`. Error responses
-use `{ "error": [{ "message": "...", "path"?: "...", "code"?: "..." }] }` — `error` is always an
+`{ "id": "...", "name": "..." }`, or for grid/list endpoints a bare JSON array with the total row
+count in an `X-Count` response header rather than the body. Error responses use
+`{ "error": [{ "message": "...", "path"?: "...", "code"?: "..." }] }` — `error` is always an
 array; only the first entry is surfaced.
 
 ## Local development

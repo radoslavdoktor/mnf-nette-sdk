@@ -2,9 +2,10 @@
 
 namespace Mnf\NetteSdk;
 
-use Mnf\NetteSdk\Endpoints\ExampleEndpoint;
-use Mnf\NetteSdk\Endpoints\Requests\ExampleRequest;
-use Mnf\NetteSdk\Endpoints\Responses\ExampleResponse;
+use Mnf\NetteSdk\Endpoints\Manufacturing\ProductionLineEndpoint;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\GetProductionLinesRequest;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLineFiltersResponse;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLineListResponse;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\ServerException;
 
@@ -18,8 +19,17 @@ class MnfSdk
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function example(ExampleRequest $request): ExampleResponse
+	public function getProductionLines(GetProductionLinesRequest $request): ProductionLineListResponse
 	{
-		return (new ExampleEndpoint($this->client))->example($request);
+		return (new ProductionLineEndpoint($this->client))->getProductionLines($request);
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws ServerException
+	 */
+	public function getProductionLineFilters(): ProductionLineFiltersResponse
+	{
+		return (new ProductionLineEndpoint($this->client))->getProductionLineFilters();
 	}
 }

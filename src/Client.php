@@ -16,6 +16,7 @@ use Lcobucci\JWT\Signer\Key\InMemory;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 use Mnf\NetteSdk\Exceptions\ServerException;
+use Mnf\NetteSdk\Http\Response;
 
 class Client
 {
@@ -49,7 +50,6 @@ class Client
 
 	/**
 	 * @param array<string, mixed> $options
-	 * @return array<string, mixed>
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
@@ -57,7 +57,7 @@ class Client
 		string $method,
 		string $uri,
 		array $options = [],
-	): array
+	): Response
 	{
 		/** @var array<string, string> $headers */
 		$headers = \is_array($options['headers'] ?? null) ? $options['headers'] : [];
@@ -68,10 +68,12 @@ class Client
 			$response = $this->httpClient->request($method, $uri, $options);
 
 			try {
-				/** @var array<string, mixed> $decoded */
 				$decoded = \json_decode($response->getBody()->getContents(), true, 512, \JSON_THROW_ON_ERROR);
 
-				return $decoded;
+				/** @var array<string, array<int, string>> $responseHeaders */
+				$responseHeaders = $response->getHeaders();
+
+				return new Response($decoded, $responseHeaders);
 			} catch (JsonException $e) {
 				throw ClientException::invalidJsonResponse($e);
 			}

@@ -6,12 +6,12 @@ use Mnf\NetteSdk\Client;
 use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 use Mnf\NetteSdk\Http\Response;
 
-class DummyClient extends Client
+class StubClient extends Client
 {
 	/**
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct()
+	public function __construct(private readonly Response $response)
 	{
 		parent::__construct('http://localhost', 'Syc1jJuyaafnDcDjxBA5nPWQyG/F4IF7brnDENdprRZmlq8bjDKCNZNJj4bTjzDAz4SXKn6niU7KaPIMj0UMcg==');
 	}
@@ -25,6 +25,6 @@ class DummyClient extends Client
 		array $options = [],
 	): Response
 	{
-		return new Response(['filters' => []], []);
+		return $this->response;
 	}
 }

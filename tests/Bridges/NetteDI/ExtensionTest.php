@@ -4,7 +4,6 @@ namespace Tests\Bridges\NetteDI;
 
 use Mnf\NetteSdk\Bridges\NetteDI\Extension;
 use Mnf\NetteSdk\Client;
-use Mnf\NetteSdk\Endpoints\Requests\ExampleRequest;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 use Mnf\NetteSdk\Exceptions\ServerException;
@@ -27,9 +26,9 @@ class ExtensionTest extends TestCase
 		$client = new DummyClient();
 		$service = new MnfSdk($client);
 
-		$response = $service->example(ExampleRequest::create('anything'));
+		$response = $service->getProductionLineFilters();
 
-		self::assertSame('dummy-output', $response->getOutput());
+		self::assertSame([], $response->getFilters());
 	}
 
 	public function testExtension(): void
