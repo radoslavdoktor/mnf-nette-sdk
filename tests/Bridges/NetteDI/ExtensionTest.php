@@ -7,12 +7,13 @@ use Mnf\NetteSdk\Client;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 use Mnf\NetteSdk\Exceptions\ServerException;
-use Mnf\NetteSdk\MnfSdk;
+use Mnf\NetteSdk\Http\Response;
+use Mnf\NetteSdk\ManufacturingApi;
 use Nette\DI\Compiler;
 use Nette\DI\Container;
 use Nette\DI\ContainerLoader;
 use PHPUnit\Framework\TestCase;
-use Tests\Stubs\Client\DummyClient;
+use Tests\Stubs\Client\StubClient;
 
 class ExtensionTest extends TestCase
 {
@@ -23,8 +24,8 @@ class ExtensionTest extends TestCase
 	 */
 	public function testService(): void
 	{
-		$client = new DummyClient();
-		$service = new MnfSdk($client);
+		$client = new StubClient(new Response(['filters' => []], []));
+		$service = new ManufacturingApi($client);
 
 		$response = $service->getProductionLineFilters();
 
@@ -35,10 +36,10 @@ class ExtensionTest extends TestCase
 	{
 		$loader = new ContainerLoader(\TEMP_DIR, true);
 		$class = $loader->load(static function (Compiler $compiler): string|null {
-			$compiler->addExtension('mnfSdk', new Extension());
+			$compiler->addExtension('manufacturingApi', new Extension());
 			$compiler->addConfig([
-				'mnfSdk' => [
-					'endpoint' => 'http://localhost',
+				'manufacturingApi' => [
+					'baseUri' => 'http://localhost',
 					'privateKey' => 'Syc1jJuyaafnDcDjxBA5nPWQyG/F4IF7brnDENdprRZmlq8bjDKCNZNJj4bTjzDAz4SXKn6niU7KaPIMj0UMcg==',
 				],
 			]);
@@ -49,7 +50,7 @@ class ExtensionTest extends TestCase
 		/** @var Container $container */
 		$container = new $class();
 
-		self::assertInstanceOf(Client::class, $container->getService('mnfSdk.client'));
-		self::assertInstanceOf(MnfSdk::class, $container->getService('mnfSdk.service'));
+		self::assertInstanceOf(Client::class, $container->getService('manufacturingApi.client'));
+		self::assertInstanceOf(ManufacturingApi::class, $container->getService('manufacturingApi.service'));
 	}
 }

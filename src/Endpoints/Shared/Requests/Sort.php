@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Manufacturing\Requests;
+namespace Mnf\NetteSdk\Endpoints\Shared\Requests;
 
-class ProductionLineSort
+class Sort
 {
 	private function __construct(
 		private readonly string $attribute,

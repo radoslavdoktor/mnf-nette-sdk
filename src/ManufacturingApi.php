@@ -3,23 +3,25 @@
 namespace Mnf\NetteSdk;
 
 use Mnf\NetteSdk\Endpoints\Manufacturing\ProductionLineEndpoint;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\GetProductionLinesRequest;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLineFiltersResponse;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLineListResponse;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLineItem;
+use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
+use Mnf\NetteSdk\Endpoints\Shared\Responses\FiltersResponse;
+use Mnf\NetteSdk\Endpoints\Shared\Responses\GridResponse;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\ServerException;
 
-class MnfSdk
+class ManufacturingApi
 {
 	public function __construct(private readonly Client $client)
 	{
 	}
 
 	/**
+	 * @return GridResponse<ProductionLineItem>
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function getProductionLines(GetProductionLinesRequest $request): ProductionLineListResponse
+	public function getProductionLines(GridRequest $request): GridResponse
 	{
 		return (new ProductionLineEndpoint($this->client))->getProductionLines($request);
 	}
@@ -28,7 +30,7 @@ class MnfSdk
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function getProductionLineFilters(): ProductionLineFiltersResponse
+	public function getProductionLineFilters(): FiltersResponse
 	{
 		return (new ProductionLineEndpoint($this->client))->getProductionLineFilters();
 	}

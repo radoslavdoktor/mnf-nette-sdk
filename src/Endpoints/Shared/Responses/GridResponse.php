@@ -1,11 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Manufacturing\Responses;
+namespace Mnf\NetteSdk\Endpoints\Shared\Responses;
 
-class ProductionLineListResponse
+/**
+ * @template TItem
+ */
+class GridResponse
 {
 	/**
-	 * @param list<ProductionLineItem> $items
+	 * @param list<TItem> $items
 	 */
 	private function __construct(
 		private readonly array $items,
@@ -15,7 +18,9 @@ class ProductionLineListResponse
 	}
 
 	/**
-	 * @param list<ProductionLineItem> $items
+	 * @template TCreateItem
+	 * @param list<TCreateItem> $items
+	 * @return self<TCreateItem>
 	 */
 	public static function create(array $items, int $totalCount): self
 	{
@@ -23,7 +28,7 @@ class ProductionLineListResponse
 	}
 
 	/**
-	 * @return list<ProductionLineItem>
+	 * @return list<TItem>
 	 */
 	public function getItems(): array
 	{

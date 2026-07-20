@@ -6,6 +6,7 @@ use DateTimeImmutable;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException as GuzzleClientException;
 use GuzzleHttp\Exception\ServerException as GuzzleServerException;
+use GuzzleHttp\HandlerStack;
 use JsonException;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Exception as JwtException;
@@ -26,9 +27,14 @@ class Client
 
 	/**
 	 * @param string $privateKey base64-encoded Ed25519 private key
+	 * @param HandlerStack|null $handlerStack overrides Guzzle's HTTP handler; for tests only
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct(string $endpoint, string $privateKey)
+	public function __construct(
+		string $baseUri,
+		string $privateKey,
+		HandlerStack|null $handlerStack = null,
+	)
 	{
 		if ($privateKey === '') {
 			throw InvalidArgumentException::emptyPrivateKey();
@@ -44,7 +50,13 @@ class Client
 			throw InvalidArgumentException::invalidPrivateKey();
 		}
 
-		$this->httpClient = new HttpClient(['base_uri' => $endpoint]);
+		$options = ['base_uri' => $baseUri];
+
+		if ($handlerStack !== null) {
+			$options['handler'] = $handlerStack;
+		}
+
+		$this->httpClient = new HttpClient($options);
 		$this->privateKey = $key;
 	}
 

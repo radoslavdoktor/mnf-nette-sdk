@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Manufacturing\Requests;
+namespace Mnf\NetteSdk\Endpoints\Shared\Requests;
 
-class ProductionLineFilter
+class Filter
 {
 	private function __construct(
 		private readonly string $attribute,

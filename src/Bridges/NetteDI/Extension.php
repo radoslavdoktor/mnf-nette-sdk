@@ -3,7 +3,7 @@
 namespace Mnf\NetteSdk\Bridges\NetteDI;
 
 use Mnf\NetteSdk\Client;
-use Mnf\NetteSdk\MnfSdk;
+use Mnf\NetteSdk\ManufacturingApi;
 use Nette\DI\CompilerExtension;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
@@ -17,7 +17,7 @@ class Extension extends CompilerExtension
 	public function getConfigSchema(): Schema
 	{
 		return Expect::structure([
-			'endpoint' => Expect::string()->dynamic(),
+			'baseUri' => Expect::string()->dynamic(),
 			'privateKey' => Expect::string()->dynamic(),
 			'autowired' => Expect::bool(true)->dynamic(),
 		]);
@@ -30,13 +30,13 @@ class Extension extends CompilerExtension
 		$client = $builder->addDefinition($this->prefix('client'))
 			->setFactory(Client::class)
 			->setArguments([
-				'endpoint' => $this->config->endpoint,
+				'baseUri' => $this->config->baseUri,
 				'privateKey' => $this->config->privateKey,
 			])
 			->setAutowired((bool)$this->config->autowired);
 
 		$builder->addDefinition($this->prefix('service'))
-			->setFactory(MnfSdk::class, [$client])
+			->setFactory(ManufacturingApi::class, [$client])
 			->setAutowired((bool)$this->config->autowired);
 	}
 }

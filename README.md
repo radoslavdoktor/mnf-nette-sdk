@@ -4,15 +4,21 @@ A Guzzle-based HTTP client for the MNF API, with JWT (EdDSA/Ed25519) bearer auth
 exception hierarchy, a layered endpoint/request/response structure, and an optional Nette DI
 bridge.
 
-Endpoints are grouped by MNF domain under `Endpoints\<Domain>`, e.g. `Endpoints\Manufacturing`:
+Endpoints are grouped by MNF domain under `Endpoints\<Domain>`, e.g. `Endpoints\Manufacturing`.
+Vocabulary generic across domains (pagination, sorting, filtering) lives in `Endpoints\Shared`
+instead of being duplicated per domain:
 
-- `MnfSdk` is a thin facade — one method per SDK operation, each delegating to an endpoint.
+- `ManufacturingApi` (and one facade class per domain) is a thin facade — one method per SDK
+  operation, each delegating to an endpoint.
 - Each endpoint extends `Endpoints\BaseEndpoint` and holds the `Client`.
 - Each request implements `Endpoints\Requests\IRequest` (`toArray(): array`), has a private
-  constructor, and is built via a named static factory (e.g. `GetProductionLinesRequest::create(...)`).
+  constructor, and is built via a named static factory (e.g. `GridRequest::create(...)`).
 - Each response has a private constructor and exposes typed getters; most implement
   `Endpoints\Responses\IResponse` (`fromArray(array $data): self`) — a response that needs data
   from outside the JSON body too (e.g. a header) uses a plain `create()` factory instead.
+- `Endpoints\Shared\Requests\GridRequest` (offset/limit/`Sort[]`/`Filter[]`) and
+  `Endpoints\Shared\Responses\FiltersResponse` are reused by every grid-style list endpoint,
+  across every domain.
 
 `Client::sendRequest()` returns a `Http\Response`, exposing the decoded JSON body (`->body`,
 `mixed` — a list for grid endpoints, a map otherwise) and response headers (`->getHeader(string): ?string`).
@@ -30,46 +36,47 @@ Register the extension in your Nette DI config:
 
 ```neon
 extensions:
-    mnfSdk: Mnf\NetteSdk\Bridges\NetteDI\Extension
+    manufacturingApi: Mnf\NetteSdk\Bridges\NetteDI\Extension
 
-mnfSdk:
-    endpoint: https://your-api.com
+manufacturingApi:
+    baseUri: https://your-api.com
     privateKey: '%env.MNF_JWT_PRIVATE_KEY%'
 ```
 
-- `endpoint` — base URL of the API
+- `baseUri` — base URL of the API
 - `privateKey` — base64-encoded Ed25519 private key used to sign JWT requests; the MNF API
   verifies signatures against the corresponding public key, so only this key's holder can
   authenticate — never commit it, keep it in your secrets store
-- `autowired` — whether the `Client` and `MnfSdk` services are autowired (default `true`);
-  set to `false` when registering more than one SDK extension to avoid autowiring ambiguity
+- `autowired` — whether the `Client` and `ManufacturingApi` services are autowired (default
+  `true`); set to `false` when registering more than one SDK extension to avoid autowiring
+  ambiguity
 
-Both `endpoint` and `privateKey` support environment variable resolution via `%env.VAR%`.
+Both `baseUri` and `privateKey` support environment variable resolution via `%env.VAR%`.
 
 Without Nette DI, construct the client directly:
 
 ```php
 $client = new Mnf\NetteSdk\Client('https://your-api.com', $privateKey);
-$sdk = new Mnf\NetteSdk\MnfSdk($client);
+$api = new Mnf\NetteSdk\ManufacturingApi($client);
 ```
 
 ## Usage
 
 ```php
 /** @inject */
-public Mnf\NetteSdk\MnfSdk $sdk;
+public Mnf\NetteSdk\ManufacturingApi $manufacturingApi;
 
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\GetProductionLinesRequest;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineFilter;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\FilterOperator;
+use Mnf\NetteSdk\Endpoints\Shared\Requests\Filter;
+use Mnf\NetteSdk\Endpoints\Shared\Requests\FilterOperator;
+use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
 
-$request = GetProductionLinesRequest::create(
+$request = GridRequest::create(
     offset: 0,
     limit: 20,
-    filters: [ProductionLineFilter::create('active', FilterOperator::Equal, '1')],
+    filters: [Filter::create('active', FilterOperator::Equal, '1')],
 );
 
-$response = $this->sdk->getProductionLines($request);
+$response = $this->manufacturingApi->getProductionLines($request);
 
 $totalCount = $response->getTotalCount(); // from the X-Count response header
 foreach ($response->getItems() as $item) {
@@ -77,7 +84,7 @@ foreach ($response->getItems() as $item) {
     $item->getName();
 }
 
-$filters = $this->sdk->getProductionLineFilters();
+$filters = $this->manufacturingApi->getProductionLineFilters();
 ```
 
 ## Exceptions

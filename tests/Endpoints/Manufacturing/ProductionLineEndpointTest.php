@@ -3,12 +3,8 @@
 namespace Tests\Endpoints\Manufacturing;
 
 use Mnf\NetteSdk\Endpoints\Manufacturing\ProductionLineEndpoint;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\FilterOperator;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\GetProductionLinesRequest;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineFilter;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineSort;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\SortDirection;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\FilterType;
+use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
+use Mnf\NetteSdk\Endpoints\Shared\Responses\FilterType;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 use Mnf\NetteSdk\Exceptions\ServerException;
@@ -32,7 +28,7 @@ class ProductionLineEndpointTest extends TestCase
 		$client = new StubClient(new Response($body, ['X-Count' => ['42']]));
 		$endpoint = new ProductionLineEndpoint($client);
 
-		$response = $endpoint->getProductionLines(GetProductionLinesRequest::create());
+		$response = $endpoint->getProductionLines(GridRequest::create());
 
 		self::assertSame(42, $response->getTotalCount());
 		self::assertCount(2, $response->getItems());
@@ -52,7 +48,7 @@ class ProductionLineEndpointTest extends TestCase
 		$client = new StubClient(new Response([], []));
 		$endpoint = new ProductionLineEndpoint($client);
 
-		$response = $endpoint->getProductionLines(GetProductionLinesRequest::create());
+		$response = $endpoint->getProductionLines(GridRequest::create());
 
 		self::assertSame(0, $response->getTotalCount());
 		self::assertSame([], $response->getItems());
@@ -87,22 +83,5 @@ class ProductionLineEndpointTest extends TestCase
 		self::assertSame(FilterType::Select, $response->getFilters()[0]->getType());
 		self::assertCount(2, $response->getFilters()[0]->getOptions());
 		self::assertSame('Active', $response->getFilters()[0]->getOptions()[0]->getName());
-	}
-
-	public function testGetProductionLinesRequestBuildsQueryWithSortAndFilter(): void
-	{
-		$request = GetProductionLinesRequest::create(
-			offset: 10,
-			limit: 5,
-			sorts: [ProductionLineSort::create('name', SortDirection::Ascending)],
-			filters: [ProductionLineFilter::create('active', FilterOperator::Equal, '1')],
-		);
-
-		self::assertSame([
-			'offset' => 10,
-			'limit' => 5,
-			'sort' => ['name' => 'asc'],
-			'filter' => ['active' => ['eq' => '1']],
-		], $request->toArray());
 	}
 }

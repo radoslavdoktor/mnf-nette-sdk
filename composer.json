@@ -45,7 +45,7 @@
   "scripts": {
     "ecs": "vendor/bin/ecs --config=ecs.php",
     "ecs-fix": "vendor/bin/ecs --config=ecs.php --fix",
-    "phpstan": "phpstan analyse -c phpstan.neon",
+    "phpstan": "phpstan analyse -c phpstan.neon --memory-limit=512M",
     "test": "phpunit",
     "qa": [
       "@ecs",

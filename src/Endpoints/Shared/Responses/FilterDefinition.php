@@ -1,11 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Manufacturing\Responses;
+namespace Mnf\NetteSdk\Endpoints\Shared\Responses;
 
 use Mnf\NetteSdk\Endpoints\Responses\IResponse;
+use Mnf\NetteSdk\Endpoints\Responses\ResponseList;
 use Mnf\NetteSdk\Exceptions\ServerException;
 
-class ProductionLineFilterDefinition implements IResponse
+class FilterDefinition implements IResponse
 {
 	/**
 	 * @param list<FilterOption> $options
@@ -26,23 +27,12 @@ class ProductionLineFilterDefinition implements IResponse
 	{
 		$attribute = $data['attribute'] ?? null;
 		$type = \is_string($data['type'] ?? null) ? FilterType::tryFrom($data['type']) : null;
-		$rawOptions = $data['options'] ?? null;
 
-		if (!\is_string($attribute) || $type === null || !\is_array($rawOptions)) {
+		if (!\is_string($attribute) || $type === null) {
 			throw ServerException::payloadError();
 		}
 
-		$options = [];
-
-		foreach ($rawOptions as $rawOption) {
-			if (!\is_array($rawOption)) {
-				throw ServerException::payloadError();
-			}
-
-			$options[] = FilterOption::fromArray($rawOption);
-		}
-
-		return new self($attribute, $type, $options);
+		return new self($attribute, $type, ResponseList::parse($data['options'] ?? null, FilterOption::class));
 	}
 
 	public function getAttribute(): string

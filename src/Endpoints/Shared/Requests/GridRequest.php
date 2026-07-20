@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Manufacturing\Requests;
+namespace Mnf\NetteSdk\Endpoints\Shared\Requests;
 
 use Mnf\NetteSdk\Endpoints\Requests\IRequest;
 
-class GetProductionLinesRequest implements IRequest
+class GridRequest implements IRequest
 {
 	/**
-	 * @param list<ProductionLineSort> $sorts
-	 * @param list<ProductionLineFilter> $filters
+	 * @param list<Sort> $sorts
+	 * @param list<Filter> $filters
 	 */
 	private function __construct(
 		private readonly int $offset,
@@ -20,8 +20,8 @@ class GetProductionLinesRequest implements IRequest
 	}
 
 	/**
-	 * @param list<ProductionLineSort> $sorts
-	 * @param list<ProductionLineFilter> $filters
+	 * @param list<Sort> $sorts
+	 * @param list<Filter> $filters
 	 */
 	public static function create(
 		int $offset = 0,

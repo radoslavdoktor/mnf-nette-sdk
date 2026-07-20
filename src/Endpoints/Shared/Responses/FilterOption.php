@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Mnf\NetteSdk\Endpoints\Manufacturing\Responses;
+namespace Mnf\NetteSdk\Endpoints\Shared\Responses;
 
 use Mnf\NetteSdk\Endpoints\Responses\IResponse;
 use Mnf\NetteSdk\Exceptions\ServerException;
