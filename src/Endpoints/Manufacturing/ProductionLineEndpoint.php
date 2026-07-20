@@ -14,13 +14,18 @@ use Mnf\NetteSdk\Exceptions\ServerException;
 class ProductionLineEndpoint extends BaseEndpoint
 {
 	/**
+	 * @param list<string> $roles
 	 * @return GridResponse<ProductionLineItem>
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function getProductionLines(GridRequest $request): GridResponse
+	public function getProductionLines(
+		GridRequest $request,
+		string|null $subject = null,
+		array $roles = [],
+	): GridResponse
 	{
-		return $this->getGridResponse('GET', 'api/manufacturing/production-lines', $request->toArray(), ProductionLineItem::class);
+		return $this->getGridResponse('GET', 'api/manufacturing/production-lines', $request->toArray(), ProductionLineItem::class, $subject, $roles);
 	}
 
 	/**

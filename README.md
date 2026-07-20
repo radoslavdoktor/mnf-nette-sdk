@@ -1,6 +1,6 @@
 # MNF Nette SDK
 
-A Guzzle-based HTTP client for the MNF API, with JWT (EdDSA/Ed25519) bearer auth, a typed
+A Symfony HttpClient-based HTTP client for the MNF API, with JWT (EdDSA/Ed25519) bearer auth, a typed
 exception hierarchy, a layered endpoint/request/response structure, and an optional Nette DI
 bridge.
 
@@ -92,7 +92,7 @@ $filters = $this->manufacturingApi->getProductionLineFilters();
 | Exception | When |
 |---|---|
 | `Mnf\NetteSdk\Exceptions\ClientException` | 4xx response or malformed JSON |
-| `Mnf\NetteSdk\Exceptions\ServerException` | 5xx response or missing payload keys |
+| `Mnf\NetteSdk\Exceptions\ServerException` | 5xx response, missing payload keys, or a transport-level failure (DNS, connection refused, timeout) |
 | `Mnf\NetteSdk\Exceptions\InvalidArgumentException` | invalid constructor arguments (e.g. empty `privateKey`) |
 
 `ClientException` and `ServerException` both expose `getContext(): mixed`, populated with the

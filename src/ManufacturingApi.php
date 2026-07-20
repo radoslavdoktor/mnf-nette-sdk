@@ -20,13 +20,18 @@ class ManufacturingApi
 	}
 
 	/**
+	 * @param list<string> $roles
 	 * @return GridResponse<ProductionLineItem>
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function getProductionLines(GridRequest $request): GridResponse
+	public function getProductionLines(
+		GridRequest $request,
+		string|null $subject = null,
+		array $roles = [],
+	): GridResponse
 	{
-		return $this->productionLineEndpoint->getProductionLines($request);
+		return $this->productionLineEndpoint->getProductionLines($request, $subject, $roles);
 	}
 
 	/**

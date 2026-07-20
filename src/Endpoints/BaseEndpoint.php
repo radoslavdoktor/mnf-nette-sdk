@@ -20,6 +20,7 @@ abstract class BaseEndpoint
 	 * @template TItem of IResponse
 	 * @param array<string, mixed> $query
 	 * @param class-string<TItem> $itemClass
+	 * @param list<string> $roles
 	 * @return GridResponse<TItem>
 	 * @throws ClientException
 	 * @throws ServerException
@@ -29,9 +30,11 @@ abstract class BaseEndpoint
 		string $uri,
 		array $query,
 		string $itemClass,
+		string|null $subject = null,
+		array $roles = [],
 	): GridResponse
 	{
-		$response = $this->client->sendRequest($method, $uri, ['query' => $query]);
+		$response = $this->client->sendRequest($method, $uri, ['query' => $query], $subject, $roles);
 		$items = ResponseList::parse($response->body, $itemClass);
 		$totalCount = $response->getHeader('X-Count');
 

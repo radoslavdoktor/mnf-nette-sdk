@@ -2,19 +2,19 @@
 
 namespace Tests;
 
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Eddsa;
 use Lcobucci\JWT\Signer\Key\InMemory;
+use Lcobucci\JWT\Token\Plain;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
 use Mnf\NetteSdk\Client;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 use Mnf\NetteSdk\Exceptions\ServerException;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 class ClientTest extends TestCase
 {
@@ -67,33 +67,85 @@ class ClientTest extends TestCase
 	 */
 	public function testSendRequestAttachesValidJwtAuthorizationHeader(): void
 	{
-		$capturedRequest = null;
-		$client = $this->createClient([new GuzzleResponse(200, [], '{}')], $capturedRequest);
+		$capturedOptions = null;
+		$client = $this->createClient(
+			static function (string $method, string $url, array $options) use (&$capturedOptions): MockResponse {
+				$capturedOptions = $options;
+
+				return new MockResponse('{}', ['http_code' => 200]);
+			},
+		);
 
 		$client->sendRequest('GET', '/anything');
 
-		self::assertNotNull($capturedRequest);
-		$authorization = $capturedRequest->getHeaderLine('Authorization');
+		self::assertIsArray($capturedOptions);
+		$authorization = $this->findHeader($capturedOptions, 'Authorization');
+		self::assertNotNull($authorization);
 		self::assertStringStartsWith('Bearer ', $authorization);
 
 		$token = \substr($authorization, \strlen('Bearer '));
 		self::assertNotSame('', $token);
 
-		$secretKey = (string)\base64_decode(self::VALID_PRIVATE_KEY, true);
-		self::assertNotSame('', $secretKey);
-		$publicKey = \sodium_crypto_sign_publickey_from_secretkey($secretKey);
+		$this->parseToken($token);
+	}
 
-		$config = Configuration::forAsymmetricSigner(
-			new Eddsa(),
-			InMemory::base64Encoded(self::VALID_PRIVATE_KEY),
-			InMemory::plainText($publicKey),
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testSendRequestSignsSubjectAndRolesClaims(): void
+	{
+		$capturedOptions = null;
+		$client = $this->createClient(
+			static function (string $method, string $url, array $options) use (&$capturedOptions): MockResponse {
+				$capturedOptions = $options;
+
+				return new MockResponse('{}', ['http_code' => 200]);
+			},
 		);
-		$parsedToken = $config->parser()->parse($token);
 
-		self::assertTrue($config->validator()->validate(
-			$parsedToken,
-			new SignedWith($config->signer(), $config->verificationKey()),
-		));
+		$client->sendRequest('GET', '/anything', [], 'admin-42', ['role-a', 'role-b']);
+
+		self::assertIsArray($capturedOptions);
+		$authorization = $this->findHeader($capturedOptions, 'Authorization');
+		self::assertNotNull($authorization);
+
+		$token = \substr($authorization, \strlen('Bearer '));
+		$parsedToken = $this->parseToken($token);
+
+		self::assertSame('admin-42', $parsedToken->claims()->get('sub'));
+		self::assertSame(['role-a', 'role-b'], $parsedToken->claims()->get('roles'));
+		self::assertNotNull($parsedToken->claims()->get('exp'));
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testSendRequestOmitsSubjectAndRolesClaimsWhenNotGiven(): void
+	{
+		$capturedOptions = null;
+		$client = $this->createClient(
+			static function (string $method, string $url, array $options) use (&$capturedOptions): MockResponse {
+				$capturedOptions = $options;
+
+				return new MockResponse('{}', ['http_code' => 200]);
+			},
+		);
+
+		$client->sendRequest('GET', '/anything');
+
+		self::assertIsArray($capturedOptions);
+		$authorization = $this->findHeader($capturedOptions, 'Authorization');
+		self::assertNotNull($authorization);
+
+		$token = \substr($authorization, \strlen('Bearer '));
+		$parsedToken = $this->parseToken($token);
+
+		self::assertFalse($parsedToken->claims()->has('sub'));
+		self::assertFalse($parsedToken->claims()->has('roles'));
 	}
 
 	/**
@@ -103,9 +155,12 @@ class ClientTest extends TestCase
 	 */
 	public function testSendRequestReturnsDecodedBodyAndHeaders(): void
 	{
-		$client = $this->createClient([
-			new GuzzleResponse(200, ['X-Count' => '3'], self::jsonEncode(['id' => 'abc'])),
-		]);
+		$client = $this->createClient(
+			new MockResponse(self::jsonEncode(['id' => 'abc']), [
+				'http_code' => 200,
+				'response_headers' => ['X-Count' => '3'],
+			]),
+		);
 
 		$response = $client->sendRequest('GET', '/anything');
 
@@ -119,9 +174,12 @@ class ClientTest extends TestCase
 	 */
 	public function testSendRequestThrowsClientExceptionWithParsedErrorOn4xx(): void
 	{
-		$client = $this->createClient([
-			new GuzzleResponse(404, [], self::jsonEncode(['error' => [['message' => 'Not found', 'code' => 'NOT_FOUND']]])),
-		]);
+		$client = $this->createClient(
+			new MockResponse(
+				self::jsonEncode(['error' => [['message' => 'Not found', 'code' => 'NOT_FOUND']]]),
+				['http_code' => 404],
+			),
+		);
 
 		try {
 			$client->sendRequest('GET', '/missing');
@@ -139,9 +197,12 @@ class ClientTest extends TestCase
 	 */
 	public function testSendRequestThrowsServerExceptionWithParsedErrorOn5xx(): void
 	{
-		$client = $this->createClient([
-			new GuzzleResponse(500, [], self::jsonEncode(['error' => [['message' => 'Internal error']]])),
-		]);
+		$client = $this->createClient(
+			new MockResponse(
+				self::jsonEncode(['error' => [['message' => 'Internal error']]]),
+				['http_code' => 500],
+			),
+		);
 
 		try {
 			$client->sendRequest('GET', '/broken');
@@ -155,13 +216,28 @@ class ClientTest extends TestCase
 	/**
 	 * @throws ClientException
 	 * @throws InvalidArgumentException
+	 */
+	public function testSendRequestThrowsServerExceptionOnTransportFailure(): void
+	{
+		$client = $this->createClient(new MockResponse('', ['error' => 'Connection refused']));
+
+		try {
+			$client->sendRequest('GET', '/unreachable');
+			self::fail('Expected ServerException to be thrown.');
+		} catch (ServerException $e) {
+			self::assertSame('Connection refused', $e->getMessage());
+			self::assertInstanceOf(TransportExceptionInterface::class, $e->getPrevious());
+		}
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
 	 * @throws ServerException
 	 */
 	public function testSendRequestThrowsClientExceptionOnMalformedJson(): void
 	{
-		$client = $this->createClient([
-			new GuzzleResponse(200, [], '{not valid json'),
-		]);
+		$client = $this->createClient(new MockResponse('{not valid json', ['http_code' => 200]));
 
 		$this->expectException(ClientException::class);
 
@@ -180,20 +256,53 @@ class ClientTest extends TestCase
 	}
 
 	/**
-	 * @param list<GuzzleResponse> $responses
+	 * @param array<array-key, mixed> $options
+	 */
+	private function findHeader(array $options, string $name): string|null
+	{
+		$normalizedHeaders = \is_array($options['normalized_headers'] ?? null) ? $options['normalized_headers'] : [];
+		$headers = \is_array($normalizedHeaders[\strtolower($name)] ?? null) ? $normalizedHeaders[\strtolower($name)] : [];
+
+		foreach ($headers as $header) {
+			if (\is_string($header) && \stripos($header, $name . ':') === 0) {
+				return \trim(\substr($header, \strlen($name) + 1));
+			}
+		}
+
+		return null;
+	}
+
+	private function parseToken(string $token): Plain
+	{
+		self::assertNotSame('', $token);
+
+		$secretKey = (string)\base64_decode(self::VALID_PRIVATE_KEY, true);
+		self::assertNotSame('', $secretKey);
+		$publicKey = \sodium_crypto_sign_publickey_from_secretkey($secretKey);
+
+		$config = Configuration::forAsymmetricSigner(
+			new Eddsa(),
+			InMemory::base64Encoded(self::VALID_PRIVATE_KEY),
+			InMemory::plainText($publicKey),
+		);
+		$parsedToken = $config->parser()->parse($token);
+
+		self::assertInstanceOf(Plain::class, $parsedToken);
+		self::assertTrue($config->validator()->validate(
+			$parsedToken,
+			new SignedWith($config->signer(), $config->verificationKey()),
+		));
+
+		return $parsedToken;
+	}
+
+	/**
 	 * @throws InvalidArgumentException
 	 */
-	private function createClient(array $responses, RequestInterface|null &$capturedRequest = null): Client
+	private function createClient(callable|MockResponse $responseFactory): Client
 	{
-		$handlerStack = HandlerStack::create(new MockHandler($responses));
-		$handlerStack->push(static function (callable $handler) use (&$capturedRequest): callable {
-			return static function (RequestInterface $request, array $options) use ($handler, &$capturedRequest) {
-				$capturedRequest = $request;
+		$httpClient = new MockHttpClient($responseFactory, 'http://localhost');
 
-				return $handler($request, $options);
-			};
-		});
-
-		return new Client('http://localhost', self::VALID_PRIVATE_KEY, $handlerStack);
+		return new Client('http://localhost', self::VALID_PRIVATE_KEY, $httpClient);
 	}
 }

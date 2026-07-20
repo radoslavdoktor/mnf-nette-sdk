@@ -2,14 +2,14 @@
 
 namespace Mnf\NetteSdk\Exceptions;
 
-use GuzzleHttp\Exception\BadResponseException;
 use JsonException;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ClientException extends RuntimeException
 {
-	public static function createFromBadResponseException(BadResponseException $e): self
+	public static function createFromResponse(ResponseInterface $response): self
 	{
-		return new self(...self::parseBadResponseException($e));
+		return new self(...self::parseFromResponse($response));
 	}
 
 	public static function invalidJsonResponse(JsonException $e): self

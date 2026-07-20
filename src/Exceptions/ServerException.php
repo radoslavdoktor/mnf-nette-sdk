@@ -2,13 +2,19 @@
 
 namespace Mnf\NetteSdk\Exceptions;
 
-use GuzzleHttp\Exception\BadResponseException;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ServerException extends RuntimeException
 {
-	public static function createFromBadResponseException(BadResponseException $e): self
+	public static function createFromResponse(ResponseInterface $response): self
 	{
-		return new self(...self::parseBadResponseException($e));
+		return new self(...self::parseFromResponse($response));
+	}
+
+	public static function createFromTransportException(TransportExceptionInterface $e): self
+	{
+		return new self($e->getMessage(), 0, $e);
 	}
 
 	public static function payloadError(): self

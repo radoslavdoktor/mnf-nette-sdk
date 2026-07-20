@@ -3,10 +3,6 @@
 namespace Mnf\NetteSdk;
 
 use DateTimeImmutable;
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\ClientException as GuzzleClientException;
-use GuzzleHttp\Exception\ServerException as GuzzleServerException;
-use GuzzleHttp\HandlerStack;
 use JsonException;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Exception as JwtException;
@@ -18,22 +14,27 @@ use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\InvalidArgumentException;
 use Mnf\NetteSdk\Exceptions\ServerException;
 use Mnf\NetteSdk\Http\Response;
+use Symfony\Component\HttpClient\HttpClient as SymfonyHttpClientFactory;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class Client
 {
-	private HttpClient $httpClient;
+	private const int ACCESS_TOKEN_TTL_SECONDS = 60;
+
+	private HttpClientInterface $httpClient;
 
 	private Key $privateKey;
 
 	/**
 	 * @param string $privateKey base64-encoded Ed25519 private key
-	 * @param HandlerStack|null $handlerStack overrides Guzzle's HTTP handler; for tests only
+	 * @param HttpClientInterface|null $httpClient overrides the HTTP client; for tests only
 	 * @throws InvalidArgumentException
 	 */
 	public function __construct(
 		string $baseUri,
 		string $privateKey,
-		HandlerStack|null $handlerStack = null,
+		HttpClientInterface|null $httpClient = null,
 	)
 	{
 		if ($privateKey === '') {
@@ -50,18 +51,13 @@ class Client
 			throw InvalidArgumentException::invalidPrivateKey();
 		}
 
-		$options = ['base_uri' => $baseUri];
-
-		if ($handlerStack !== null) {
-			$options['handler'] = $handlerStack;
-		}
-
-		$this->httpClient = new HttpClient($options);
+		$this->httpClient = ($httpClient ?? SymfonyHttpClientFactory::create())->withOptions(['base_uri' => $baseUri]);
 		$this->privateKey = $key;
 	}
 
 	/**
 	 * @param array<string, mixed> $options
+	 * @param list<string> $roles
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
@@ -69,41 +65,65 @@ class Client
 		string $method,
 		string $uri,
 		array $options = [],
+		string|null $subject = null,
+		array $roles = [],
 	): Response
 	{
 		/** @var array<string, string> $headers */
 		$headers = \is_array($options['headers'] ?? null) ? $options['headers'] : [];
-		$headers['Authorization'] = \sprintf('Bearer %s', $this->createAccessToken());
+		$headers['Authorization'] = \sprintf('Bearer %s', $this->createAccessToken($subject, $roles));
 		$options['headers'] = $headers;
 
 		try {
 			$response = $this->httpClient->request($method, $uri, $options);
+			$statusCode = $response->getStatusCode();
+		} catch (TransportExceptionInterface $e) {
+			throw ServerException::createFromTransportException($e);
+		}
 
-			try {
-				$decoded = \json_decode($response->getBody()->getContents(), true, 512, \JSON_THROW_ON_ERROR);
+		if ($statusCode >= 500) {
+			throw ServerException::createFromResponse($response);
+		}
 
-				/** @var array<string, array<int, string>> $responseHeaders */
-				$responseHeaders = $response->getHeaders();
+		if ($statusCode >= 400) {
+			throw ClientException::createFromResponse($response);
+		}
 
-				return new Response($decoded, $responseHeaders);
-			} catch (JsonException $e) {
-				throw ClientException::invalidJsonResponse($e);
-			}
-		} catch (GuzzleClientException $e) {
-			throw ClientException::createFromBadResponseException($e);
-		} catch (GuzzleServerException $e) {
-			throw ServerException::createFromBadResponseException($e);
+		try {
+			$decoded = \json_decode($response->getContent(), true, 512, \JSON_THROW_ON_ERROR);
+
+			return new Response($decoded, $response->getHeaders());
+		} catch (JsonException $e) {
+			throw ClientException::invalidJsonResponse($e);
 		}
 	}
 
-	private function createAccessToken(): string
+	/**
+	 * @param list<string> $roles
+	 */
+	private function createAccessToken(string|null $subject, array $roles): string
 	{
 		$facade = new JwtFacade();
+		$now = new DateTimeImmutable();
 
 		$token = $facade->issue(
 			new Eddsa(),
 			$this->privateKey,
-			fn (Builder $builder) => $builder->issuedAt(new DateTimeImmutable()),
+			function (Builder $builder) use ($now, $subject, $roles): Builder {
+				$builder = $builder
+					->issuedAt($now)
+					->expiresAt($now->modify(\sprintf('+%d seconds', self::ACCESS_TOKEN_TTL_SECONDS)));
+
+				if ($subject !== null && $subject !== '') {
+					$builder = $builder->relatedTo($subject);
+				}
+
+				if ($roles !== []) {
+					$builder = $builder->withClaim('roles', $roles);
+				}
+
+				return $builder;
+			},
 		);
 
 		return $token->toString();
