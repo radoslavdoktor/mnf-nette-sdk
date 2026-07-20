@@ -76,7 +76,7 @@ class ClientTest extends TestCase
 			},
 		);
 
-		$client->sendRequest('GET', '/anything');
+		$client->sendRequest('GET', '/anything', $client->createAuthorizationHeader());
 
 		self::assertIsArray($capturedOptions);
 		$authorization = $this->findHeader($capturedOptions, 'Authorization');
@@ -105,7 +105,7 @@ class ClientTest extends TestCase
 			},
 		);
 
-		$client->sendRequest('GET', '/anything', [], 'admin-42', ['role-a', 'role-b']);
+		$client->sendRequest('GET', '/anything', $client->createAuthorizationHeader('admin-42', ['role-a', 'role-b']));
 
 		self::assertIsArray($capturedOptions);
 		$authorization = $this->findHeader($capturedOptions, 'Authorization');
@@ -135,7 +135,7 @@ class ClientTest extends TestCase
 			},
 		);
 
-		$client->sendRequest('GET', '/anything');
+		$client->sendRequest('GET', '/anything', $client->createAuthorizationHeader());
 
 		self::assertIsArray($capturedOptions);
 		$authorization = $this->findHeader($capturedOptions, 'Authorization');
@@ -162,7 +162,7 @@ class ClientTest extends TestCase
 			]),
 		);
 
-		$response = $client->sendRequest('GET', '/anything');
+		$response = $client->sendRequest('GET', '/anything', $client->createAuthorizationHeader());
 
 		self::assertSame(['id' => 'abc'], $response->body);
 		self::assertSame('3', $response->getHeader('X-Count'));
@@ -182,7 +182,7 @@ class ClientTest extends TestCase
 		);
 
 		try {
-			$client->sendRequest('GET', '/missing');
+			$client->sendRequest('GET', '/missing', $client->createAuthorizationHeader());
 			self::fail('Expected ClientException to be thrown.');
 		} catch (ClientException $e) {
 			self::assertSame('Not found', $e->getMessage());
@@ -205,7 +205,7 @@ class ClientTest extends TestCase
 		);
 
 		try {
-			$client->sendRequest('GET', '/broken');
+			$client->sendRequest('GET', '/broken', $client->createAuthorizationHeader());
 			self::fail('Expected ServerException to be thrown.');
 		} catch (ServerException $e) {
 			self::assertSame('Internal error', $e->getMessage());
@@ -222,7 +222,7 @@ class ClientTest extends TestCase
 		$client = $this->createClient(new MockResponse('', ['error' => 'Connection refused']));
 
 		try {
-			$client->sendRequest('GET', '/unreachable');
+			$client->sendRequest('GET', '/unreachable', $client->createAuthorizationHeader());
 			self::fail('Expected ServerException to be thrown.');
 		} catch (ServerException $e) {
 			self::assertSame('Connection refused', $e->getMessage());
@@ -241,7 +241,7 @@ class ClientTest extends TestCase
 
 		$this->expectException(ClientException::class);
 
-		$client->sendRequest('GET', '/anything');
+		$client->sendRequest('GET', '/anything', $client->createAuthorizationHeader());
 	}
 
 	/**

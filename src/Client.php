@@ -56,22 +56,28 @@ class Client
 	}
 
 	/**
-	 * @param array<string, mixed> $options
 	 * @param list<string> $roles
+	 */
+	public function createAuthorizationHeader(string|null $subject = null, array $roles = []): string
+	{
+		return \sprintf('Bearer %s', $this->createAccessToken($subject, $roles));
+	}
+
+	/**
+	 * @param array<string, mixed> $options
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
 	public function sendRequest(
 		string $method,
 		string $uri,
+		string $authorizationHeader,
 		array $options = [],
-		string|null $subject = null,
-		array $roles = [],
 	): Response
 	{
 		/** @var array<string, string> $headers */
 		$headers = \is_array($options['headers'] ?? null) ? $options['headers'] : [];
-		$headers['Authorization'] = \sprintf('Bearer %s', $this->createAccessToken($subject, $roles));
+		$headers['Authorization'] = $authorizationHeader;
 		$options['headers'] = $headers;
 
 		try {

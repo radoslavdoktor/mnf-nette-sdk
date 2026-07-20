@@ -34,7 +34,8 @@ abstract class BaseEndpoint
 		array $roles = [],
 	): GridResponse
 	{
-		$response = $this->client->sendRequest($method, $uri, ['query' => $query], $subject, $roles);
+		$authorization = $this->client->createAuthorizationHeader($subject, $roles);
+		$response = $this->client->sendRequest($method, $uri, $authorization, ['query' => $query]);
 		$items = ResponseList::parse($response->body, $itemClass);
 		$totalCount = $response->getHeader('X-Count');
 

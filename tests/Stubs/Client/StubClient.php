@@ -18,14 +18,12 @@ class StubClient extends Client
 
 	/**
 	 * @param array<string, mixed> $options
-	 * @param list<string> $roles
 	 */
 	public function sendRequest(
 		string $method,
 		string $uri,
+		string $authorizationHeader,
 		array $options = [],
-		string|null $subject = null,
-		array $roles = [],
 	): Response
 	{
 		return $this->response;
