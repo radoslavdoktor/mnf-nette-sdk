@@ -12,8 +12,11 @@ use Mnf\NetteSdk\Exceptions\ServerException;
 
 class ManufacturingApi
 {
-	public function __construct(private readonly Client $client)
+	private ProductionLineEndpoint $productionLineEndpoint;
+
+	public function __construct(Client $client)
 	{
+		$this->productionLineEndpoint = new ProductionLineEndpoint($client);
 	}
 
 	/**
@@ -23,7 +26,7 @@ class ManufacturingApi
 	 */
 	public function getProductionLines(GridRequest $request): GridResponse
 	{
-		return (new ProductionLineEndpoint($this->client))->getProductionLines($request);
+		return $this->productionLineEndpoint->getProductionLines($request);
 	}
 
 	/**
@@ -32,6 +35,6 @@ class ManufacturingApi
 	 */
 	public function getProductionLineFilters(): FiltersResponse
 	{
-		return (new ProductionLineEndpoint($this->client))->getProductionLineFilters();
+		return $this->productionLineEndpoint->getProductionLineFilters();
 	}
 }
