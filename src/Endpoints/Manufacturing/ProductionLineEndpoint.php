@@ -34,8 +34,7 @@ class ProductionLineEndpoint extends BaseEndpoint
 	 */
 	public function getProductionLineFilters(): FiltersResponse
 	{
-		$authorization = $this->client->createAuthorizationHeader();
-		$response = $this->client->sendRequest('GET', 'api/manufacturing/production-lines/filters', $authorization);
+		$response = $this->sendAuthenticatedRequest('GET', 'api/manufacturing/production-lines/filters');
 
 		return FiltersResponse::fromArray(ResponseList::assertArray($response->body));
 	}

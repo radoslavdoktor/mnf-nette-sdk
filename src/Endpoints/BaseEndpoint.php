@@ -6,6 +6,7 @@ use Mnf\NetteSdk\Client;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\GridResponse;
 use Mnf\NetteSdk\Exceptions\ClientException;
 use Mnf\NetteSdk\Exceptions\ServerException;
+use Mnf\NetteSdk\Http\Response;
 
 abstract class BaseEndpoint
 {
@@ -14,6 +15,25 @@ abstract class BaseEndpoint
 	public function __construct(Client $client)
 	{
 		$this->client = $client;
+	}
+
+	/**
+	 * @param array<string, mixed> $options
+	 * @param list<string> $roles
+	 * @throws ClientException
+	 * @throws ServerException
+	 */
+	protected function sendAuthenticatedRequest(
+		string $method,
+		string $uri,
+		array $options = [],
+		string|null $subject = null,
+		array $roles = [],
+	): Response
+	{
+		$authorization = $this->client->createAuthorizationHeader($subject, $roles);
+
+		return $this->client->sendRequest($method, $uri, $authorization, $options);
 	}
 
 	/**
@@ -34,8 +54,7 @@ abstract class BaseEndpoint
 		array $roles = [],
 	): GridResponse
 	{
-		$authorization = $this->client->createAuthorizationHeader($subject, $roles);
-		$response = $this->client->sendRequest($method, $uri, $authorization, ['query' => $query]);
+		$response = $this->sendAuthenticatedRequest($method, $uri, ['query' => $query], $subject, $roles);
 		$items = ResponseList::parse($response->body, $itemClass);
 		$totalCount = $response->getHeader('X-Count');
 
