@@ -35,11 +35,12 @@ class ManufacturingApi
 	}
 
 	/**
+	 * @param list<string> $roles
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function getProductionLineFilters(): FiltersResponse
+	public function getProductionLineFilters(string|null $subject = null, array $roles = []): FiltersResponse
 	{
-		return $this->productionLineEndpoint->getProductionLineFilters();
+		return $this->productionLineEndpoint->getProductionLineFilters($subject, $roles);
 	}
 }

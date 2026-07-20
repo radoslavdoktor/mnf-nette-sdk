@@ -29,12 +29,13 @@ class ProductionLineEndpoint extends BaseEndpoint
 	}
 
 	/**
+	 * @param list<string> $roles
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function getProductionLineFilters(): FiltersResponse
+	public function getProductionLineFilters(string|null $subject = null, array $roles = []): FiltersResponse
 	{
-		$response = $this->sendAuthenticatedRequest('GET', 'api/v1/manufacturing/production-lines/filters');
+		$response = $this->sendAuthenticatedRequest('GET', 'api/v1/manufacturing/production-lines/filters', [], $subject, $roles);
 
 		return FiltersResponse::fromArray(ResponseList::assertArray($response->body));
 	}
