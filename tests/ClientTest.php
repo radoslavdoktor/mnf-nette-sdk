@@ -188,6 +188,20 @@ class ClientTest extends TestCase
 	}
 
 	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testSendRequestReturnsNullBodyOnEmptyResponse(): void
+	{
+		$client = $this->createClient(new MockResponse('', ['http_code' => 204]));
+
+		$response = $client->sendRequest('DELETE', '/anything', $client->createAuthorizationHeader());
+
+		self::assertNull($response->body);
+	}
+
+	/**
 	 * @throws InvalidArgumentException
 	 * @throws ServerException
 	 */

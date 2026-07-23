@@ -8,6 +8,13 @@ use Mnf\NetteSdk\Http\Response;
 
 class StubClient extends Client
 {
+	public string|null $capturedMethod = null;
+
+	public string|null $capturedUri = null;
+
+	/** @var array<string, mixed>|null */
+	public array|null $capturedOptions = null;
+
 	/**
 	 * @throws InvalidArgumentException
 	 */
@@ -26,6 +33,10 @@ class StubClient extends Client
 		array $options = [],
 	): Response
 	{
+		$this->capturedMethod = $method;
+		$this->capturedUri = $uri;
+		$this->capturedOptions = $options;
+
 		return $this->response;
 	}
 }

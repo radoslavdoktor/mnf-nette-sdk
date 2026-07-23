@@ -3,8 +3,9 @@
 namespace Mnf\NetteSdk;
 
 use Mnf\NetteSdk\Endpoints\Manufacturing\ProductionLineEndpoint;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineRequest;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLineItem;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\CreateProductionLine;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\UpdateProductionLine;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Responses\ProductionLine;
 use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\FiltersResponse;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\GridResponse;
@@ -24,8 +25,6 @@ class ManufacturingApi
 	}
 
 	/**
-	 * Returns a copy of this facade that authenticates as the given subject/roles.
-	 *
 	 * @param list<string> $roles
 	 */
 	public function withIdentity(string|null $subject, array $roles = []): self
@@ -34,7 +33,7 @@ class ManufacturingApi
 	}
 
 	/**
-	 * @return GridResponse<ProductionLineItem>
+	 * @return GridResponse<ProductionLine>
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
@@ -56,7 +55,7 @@ class ManufacturingApi
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function getProductionLine(string $id): ProductionLineItem
+	public function getProductionLine(string $id): ProductionLine
 	{
 		return $this->productionLineEndpoint->getProductionLine($id);
 	}
@@ -65,7 +64,7 @@ class ManufacturingApi
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function createProductionLine(ProductionLineRequest $request): ProductionLineItem
+	public function createProductionLine(CreateProductionLine $request): ProductionLine
 	{
 		return $this->productionLineEndpoint->createProductionLine($request);
 	}
@@ -74,7 +73,7 @@ class ManufacturingApi
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
-	public function updateProductionLine(string $id, ProductionLineRequest $request): ProductionLineItem
+	public function updateProductionLine(string $id, UpdateProductionLine $request): ProductionLine
 	{
 		return $this->productionLineEndpoint->updateProductionLine($id, $request);
 	}

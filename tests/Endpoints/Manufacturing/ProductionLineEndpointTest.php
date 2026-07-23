@@ -3,7 +3,8 @@
 namespace Tests\Endpoints\Manufacturing;
 
 use Mnf\NetteSdk\Endpoints\Manufacturing\ProductionLineEndpoint;
-use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineRequest;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\CreateProductionLine;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\UpdateProductionLine;
 use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\FilterType;
 use Mnf\NetteSdk\Exceptions\ClientException;
@@ -37,6 +38,8 @@ class ProductionLineEndpointTest extends TestCase
 		self::assertSame('Line A', $response->getItems()[0]->getName());
 		self::assertTrue($response->getItems()[0]->isActive());
 		self::assertSame('out', $response->getItems()[1]->getOutputPositionId());
+		self::assertSame('GET', $client->capturedMethod);
+		self::assertSame('api/v1/manufacturing/production-lines', $client->capturedUri);
 	}
 
 	/**
@@ -84,6 +87,8 @@ class ProductionLineEndpointTest extends TestCase
 		self::assertSame(FilterType::Select, $response->getFilters()[0]->getType());
 		self::assertCount(2, $response->getFilters()[0]->getOptions());
 		self::assertSame('Active', $response->getFilters()[0]->getOptions()[0]->getName());
+		self::assertSame('GET', $client->capturedMethod);
+		self::assertSame('api/v1/manufacturing/production-lines/filters', $client->capturedUri);
 	}
 
 	/**
@@ -101,6 +106,8 @@ class ProductionLineEndpointTest extends TestCase
 
 		self::assertSame('a', $item->getId());
 		self::assertSame('Line A', $item->getName());
+		self::assertSame('GET', $client->capturedMethod);
+		self::assertSame('api/v1/manufacturing/production-lines/a', $client->capturedUri);
 	}
 
 	/**
@@ -114,12 +121,18 @@ class ProductionLineEndpointTest extends TestCase
 		$client = new StubClient(new Response($body, []));
 		$endpoint = new ProductionLineEndpoint($client);
 
-		$item = $endpoint->createProductionLine(ProductionLineRequest::create('Line A', 'desc', true, 'in', 'out'));
+		$item = $endpoint->createProductionLine(CreateProductionLine::create('a', 'Line A', 'desc', true, 'in', 'out'));
 
 		self::assertSame('a', $item->getId());
 		self::assertSame('Line A', $item->getName());
 		self::assertSame('in', $item->getInputPositionId());
 		self::assertSame('out', $item->getOutputPositionId());
+		self::assertSame('POST', $client->capturedMethod);
+		self::assertSame('api/v1/manufacturing/production-lines', $client->capturedUri);
+		self::assertSame(
+			['id' => 'a', 'name' => 'Line A', 'description' => 'desc', 'active' => true, 'inputPositionId' => 'in', 'outputPositionId' => 'out'],
+			$client->capturedOptions['json'] ?? null,
+		);
 	}
 
 	/**
@@ -133,10 +146,14 @@ class ProductionLineEndpointTest extends TestCase
 		$client = new StubClient(new Response($body, []));
 		$endpoint = new ProductionLineEndpoint($client);
 
-		$item = $endpoint->updateProductionLine('a', ProductionLineRequest::create('Line A updated', active: false));
+		$item = $endpoint->updateProductionLine('a', UpdateProductionLine::create('Line A updated', active: false));
 
 		self::assertSame('Line A updated', $item->getName());
 		self::assertFalse($item->isActive());
+		self::assertSame('PUT', $client->capturedMethod);
+		self::assertSame('api/v1/manufacturing/production-lines/a', $client->capturedUri);
+		self::assertIsArray($client->capturedOptions['json'] ?? null);
+		self::assertArrayNotHasKey('id', $client->capturedOptions['json']);
 	}
 
 	/**
@@ -151,6 +168,7 @@ class ProductionLineEndpointTest extends TestCase
 
 		$endpoint->deleteProductionLine('a');
 
-		self::expectNotToPerformAssertions();
+		self::assertSame('DELETE', $client->capturedMethod);
+		self::assertSame('api/v1/manufacturing/production-lines/a', $client->capturedUri);
 	}
 }

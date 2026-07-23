@@ -4,7 +4,7 @@ namespace Mnf\NetteSdk\Endpoints\Manufacturing\Requests;
 
 use Mnf\NetteSdk\Endpoints\IRequest;
 
-class ProductionLineRequest implements IRequest
+class UpdateProductionLine implements IRequest
 {
 	private function __construct(
 		private readonly string $name,

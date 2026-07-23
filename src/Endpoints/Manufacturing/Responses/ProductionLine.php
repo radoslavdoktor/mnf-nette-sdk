@@ -5,7 +5,7 @@ namespace Mnf\NetteSdk\Endpoints\Manufacturing\Responses;
 use Mnf\NetteSdk\Endpoints\IResponse;
 use Mnf\NetteSdk\Exceptions\ServerException;
 
-class ProductionLineItem implements IResponse
+class ProductionLine implements IResponse
 {
 	private function __construct(
 		private readonly string $id,
