@@ -60,6 +60,23 @@ $client = new Mnf\NetteSdk\Client('https://your-api.com', $privateKey);
 $api = new Mnf\NetteSdk\ManufacturingApi($client);
 ```
 
+## Identity
+
+Every request is signed with a JWT carrying an optional `sub` (subject) claim and `roles` claim,
+identifying who the SDK is acting as. Rather than passing `$subject`/`$roles` to every endpoint
+method, set them once via `Client::withIdentity()` (or the equivalent `ManufacturingApi::withIdentity()`,
+which just forwards to its `Client`). Both return an independent clone — the original is left
+untouched — so it's cheap to call per request/per user without affecting other holders of the
+original instance:
+
+```php
+$client = $client->withIdentity($user->getId(), $user->getRoles());
+// or, via the facade:
+$api = $api->withIdentity($user->getId(), $user->getRoles());
+```
+
+Omit the call (or pass `null`/`[]`) to sign requests with no subject/roles claims.
+
 ## Usage
 
 ```php
@@ -69,6 +86,8 @@ public Mnf\NetteSdk\ManufacturingApi $manufacturingApi;
 use Mnf\NetteSdk\Endpoints\Shared\Requests\Filter;
 use Mnf\NetteSdk\Endpoints\Shared\Requests\FilterOperator;
 use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
+
+$this->manufacturingApi = $this->manufacturingApi->withIdentity($user->getId(), $user->getRoles());
 
 $request = GridRequest::create(
     offset: 0,
@@ -85,6 +104,21 @@ foreach ($response->getItems() as $item) {
 }
 
 $filters = $this->manufacturingApi->getProductionLineFilters();
+
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineRequest;
+
+$item = $this->manufacturingApi->getProductionLine($id);
+
+$created = $this->manufacturingApi->createProductionLine(
+    ProductionLineRequest::create(name: 'Line A', description: 'desc', active: true),
+);
+
+$updated = $this->manufacturingApi->updateProductionLine(
+    $id,
+    ProductionLineRequest::create(name: 'Line A', active: false),
+);
+
+$this->manufacturingApi->deleteProductionLine($id);
 ```
 
 ## Exceptions

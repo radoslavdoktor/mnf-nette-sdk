@@ -19,7 +19,6 @@ abstract class BaseEndpoint
 
 	/**
 	 * @param array<string, mixed> $options
-	 * @param list<string> $roles
 	 * @throws ClientException
 	 * @throws ServerException
 	 */
@@ -27,11 +26,9 @@ abstract class BaseEndpoint
 		string $method,
 		string $uri,
 		array $options = [],
-		string|null $subject = null,
-		array $roles = [],
 	): Response
 	{
-		$authorization = $this->client->createAuthorizationHeader($subject, $roles);
+		$authorization = $this->client->createAuthorizationHeader();
 
 		return $this->client->sendRequest($method, $uri, $authorization, $options);
 	}
@@ -40,7 +37,6 @@ abstract class BaseEndpoint
 	 * @template TItem of IResponse
 	 * @param array<string, mixed> $query
 	 * @param class-string<TItem> $itemClass
-	 * @param list<string> $roles
 	 * @return GridResponse<TItem>
 	 * @throws ClientException
 	 * @throws ServerException
@@ -50,14 +46,35 @@ abstract class BaseEndpoint
 		string $uri,
 		array $query,
 		string $itemClass,
-		string|null $subject = null,
-		array $roles = [],
 	): GridResponse
 	{
-		$response = $this->sendAuthenticatedRequest($method, $uri, ['query' => $query], $subject, $roles);
+		$response = $this->sendAuthenticatedRequest($method, $uri, ['query' => $query]);
 		$items = ResponseList::parse($response->body, $itemClass);
 		$totalCount = $response->getHeader('X-Count');
 
 		return GridResponse::create($items, $totalCount !== null ? (int)$totalCount : \count($items));
+	}
+
+	/**
+	 * @template TItem of IResponse
+	 * @param array<string, mixed> $options
+	 * @param class-string<TItem> $itemClass
+	 * @return TItem
+	 * @throws ClientException
+	 * @throws ServerException
+	 */
+	protected function getItemResponse(
+		string $method,
+		string $uri,
+		array $options,
+		string $itemClass,
+	): IResponse
+	{
+		$response = $this->sendAuthenticatedRequest($method, $uri, $options);
+
+		/** @var TItem $item */
+		$item = $itemClass::fromArray(ResponseList::assertArray($response->body));
+
+		return $item;
 	}
 }

@@ -3,6 +3,7 @@
 namespace Tests\Endpoints\Manufacturing;
 
 use Mnf\NetteSdk\Endpoints\Manufacturing\ProductionLineEndpoint;
+use Mnf\NetteSdk\Endpoints\Manufacturing\Requests\ProductionLineRequest;
 use Mnf\NetteSdk\Endpoints\Shared\Requests\GridRequest;
 use Mnf\NetteSdk\Endpoints\Shared\Responses\FilterType;
 use Mnf\NetteSdk\Exceptions\ClientException;
@@ -83,5 +84,73 @@ class ProductionLineEndpointTest extends TestCase
 		self::assertSame(FilterType::Select, $response->getFilters()[0]->getType());
 		self::assertCount(2, $response->getFilters()[0]->getOptions());
 		self::assertSame('Active', $response->getFilters()[0]->getOptions()[0]->getName());
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testGetProductionLine(): void
+	{
+		$body = ['id' => 'a', 'name' => 'Line A', 'description' => null, 'active' => true, 'inputPositionId' => null, 'outputPositionId' => null];
+		$client = new StubClient(new Response($body, []));
+		$endpoint = new ProductionLineEndpoint($client);
+
+		$item = $endpoint->getProductionLine('a');
+
+		self::assertSame('a', $item->getId());
+		self::assertSame('Line A', $item->getName());
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testCreateProductionLine(): void
+	{
+		$body = ['id' => 'a', 'name' => 'Line A', 'description' => 'desc', 'active' => true, 'inputPositionId' => 'in', 'outputPositionId' => 'out'];
+		$client = new StubClient(new Response($body, []));
+		$endpoint = new ProductionLineEndpoint($client);
+
+		$item = $endpoint->createProductionLine(ProductionLineRequest::create('Line A', 'desc', true, 'in', 'out'));
+
+		self::assertSame('a', $item->getId());
+		self::assertSame('Line A', $item->getName());
+		self::assertSame('in', $item->getInputPositionId());
+		self::assertSame('out', $item->getOutputPositionId());
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testUpdateProductionLine(): void
+	{
+		$body = ['id' => 'a', 'name' => 'Line A updated', 'description' => null, 'active' => false, 'inputPositionId' => null, 'outputPositionId' => null];
+		$client = new StubClient(new Response($body, []));
+		$endpoint = new ProductionLineEndpoint($client);
+
+		$item = $endpoint->updateProductionLine('a', ProductionLineRequest::create('Line A updated', active: false));
+
+		self::assertSame('Line A updated', $item->getName());
+		self::assertFalse($item->isActive());
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testDeleteProductionLine(): void
+	{
+		$client = new StubClient(new Response(null, []));
+		$endpoint = new ProductionLineEndpoint($client);
+
+		$endpoint->deleteProductionLine('a');
+
+		self::expectNotToPerformAssertions();
 	}
 }

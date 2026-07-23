@@ -26,6 +26,11 @@ class Client
 
 	private Key $privateKey;
 
+	private string|null $subject = null;
+
+	/** @var list<string> */
+	private array $roles = [];
+
 	/**
 	 * @param string $privateKey base64-encoded Ed25519 private key
 	 * @param HttpClientInterface|null $httpClient overrides the HTTP client; for tests only
@@ -56,11 +61,22 @@ class Client
 	}
 
 	/**
+	 * Returns a clone of this client that authenticates as the given subject/roles.
+	 *
 	 * @param list<string> $roles
 	 */
-	public function createAuthorizationHeader(string|null $subject = null, array $roles = []): string
+	public function withIdentity(string|null $subject, array $roles = []): static
 	{
-		return \sprintf('Bearer %s', $this->createAccessToken($subject, $roles));
+		$clone = clone $this;
+		$clone->subject = $subject;
+		$clone->roles = $roles;
+
+		return $clone;
+	}
+
+	public function createAuthorizationHeader(): string
+	{
+		return \sprintf('Bearer %s', $this->createAccessToken());
 	}
 
 	/**
@@ -104,10 +120,7 @@ class Client
 		}
 	}
 
-	/**
-	 * @param list<string> $roles
-	 */
-	private function createAccessToken(string|null $subject, array $roles): string
+	private function createAccessToken(): string
 	{
 		$facade = new JwtFacade();
 		$now = new DateTimeImmutable();
@@ -115,17 +128,17 @@ class Client
 		$token = $facade->issue(
 			new Eddsa(),
 			$this->privateKey,
-			function (Builder $builder) use ($now, $subject, $roles): Builder {
+			function (Builder $builder) use ($now): Builder {
 				$builder = $builder
 					->issuedAt($now)
 					->expiresAt($now->modify(\sprintf('+%d seconds', self::ACCESS_TOKEN_TTL_SECONDS)));
 
-				if ($subject !== null && $subject !== '') {
-					$builder = $builder->relatedTo($subject);
+				if ($this->subject !== null && $this->subject !== '') {
+					$builder = $builder->relatedTo($this->subject);
 				}
 
-				if ($roles !== []) {
-					$builder = $builder->withClaim('roles', $roles);
+				if ($this->roles !== []) {
+					$builder = $builder->withClaim('roles', $this->roles);
 				}
 
 				return $builder;

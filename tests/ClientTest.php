@@ -105,7 +105,8 @@ class ClientTest extends TestCase
 			},
 		);
 
-		$client->sendRequest('GET', '/anything', $client->createAuthorizationHeader('admin-42', ['role-a', 'role-b']));
+		$client = $client->withIdentity('admin-42', ['role-a', 'role-b']);
+		$client->sendRequest('GET', '/anything', $client->createAuthorizationHeader());
 
 		self::assertIsArray($capturedOptions);
 		$authorization = $this->findHeader($capturedOptions, 'Authorization');
@@ -117,6 +118,24 @@ class ClientTest extends TestCase
 		self::assertSame('admin-42', $parsedToken->claims()->get('sub'));
 		self::assertSame(['role-a', 'role-b'], $parsedToken->claims()->get('roles'));
 		self::assertNotNull($parsedToken->claims()->get('exp'));
+	}
+
+	/**
+	 * @throws ClientException
+	 * @throws InvalidArgumentException
+	 * @throws ServerException
+	 */
+	public function testWithIdentityDoesNotMutateOriginalClient(): void
+	{
+		$client = $this->createClient(new MockResponse('{}', ['http_code' => 200]));
+
+		$scopedClient = $client->withIdentity('admin-42', ['role-a']);
+
+		$parsedToken = $this->parseToken(\substr($client->createAuthorizationHeader(), \strlen('Bearer ')));
+		self::assertFalse($parsedToken->claims()->has('sub'));
+
+		$parsedScopedToken = $this->parseToken(\substr($scopedClient->createAuthorizationHeader(), \strlen('Bearer ')));
+		self::assertSame('admin-42', $parsedScopedToken->claims()->get('sub'));
 	}
 
 	/**
