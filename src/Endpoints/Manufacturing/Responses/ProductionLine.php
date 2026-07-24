@@ -14,6 +14,7 @@ class ProductionLine implements IResponse
 		private readonly bool $active,
 		private readonly string|null $inputPositionId,
 		private readonly string|null $outputPositionId,
+		private readonly string|null $warehouseId,
 	)
 	{
 	}
@@ -30,6 +31,7 @@ class ProductionLine implements IResponse
 		$active = $data['active'] ?? null;
 		$inputPositionId = $data['inputPositionId'] ?? null;
 		$outputPositionId = $data['outputPositionId'] ?? null;
+		$warehouseId = $data['warehouseId'] ?? null;
 
 		if (
 			!\is_string($id)
@@ -38,11 +40,12 @@ class ProductionLine implements IResponse
 			|| !\is_bool($active)
 			|| ($inputPositionId !== null && !\is_string($inputPositionId))
 			|| ($outputPositionId !== null && !\is_string($outputPositionId))
+			|| ($warehouseId !== null && !\is_string($warehouseId))
 		) {
 			throw ServerException::payloadError();
 		}
 
-		return new self($id, $name, $description, $active, $inputPositionId, $outputPositionId);
+		return new self($id, $name, $description, $active, $inputPositionId, $outputPositionId, $warehouseId);
 	}
 
 	public function getId(): string
@@ -73,5 +76,10 @@ class ProductionLine implements IResponse
 	public function getOutputPositionId(): string|null
 	{
 		return $this->outputPositionId;
+	}
+
+	public function getWarehouseId(): string|null
+	{
+		return $this->warehouseId;
 	}
 }

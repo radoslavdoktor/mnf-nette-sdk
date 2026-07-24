@@ -24,8 +24,8 @@ class ProductionLineEndpointTest extends TestCase
 	public function testGetProductionLinesUsesCountHeader(): void
 	{
 		$body = [
-			['id' => 'a', 'name' => 'Line A', 'description' => null, 'active' => true, 'inputPositionId' => null, 'outputPositionId' => null],
-			['id' => 'b', 'name' => 'Line B', 'description' => 'desc', 'active' => false, 'inputPositionId' => 'in', 'outputPositionId' => 'out'],
+			['id' => 'a', 'name' => 'Line A', 'description' => null, 'active' => true, 'inputPositionId' => null, 'outputPositionId' => null, 'warehouseId' => null],
+			['id' => 'b', 'name' => 'Line B', 'description' => 'desc', 'active' => false, 'inputPositionId' => 'in', 'outputPositionId' => 'out', 'warehouseId' => 'wh-1'],
 		];
 		$client = new StubClient(new Response($body, ['X-Count' => ['42']]));
 		$endpoint = new ProductionLineEndpoint($client);
@@ -38,6 +38,7 @@ class ProductionLineEndpointTest extends TestCase
 		self::assertSame('Line A', $response->getItems()[0]->getName());
 		self::assertTrue($response->getItems()[0]->isActive());
 		self::assertSame('out', $response->getItems()[1]->getOutputPositionId());
+		self::assertSame('wh-1', $response->getItems()[1]->getWarehouseId());
 		self::assertSame('GET', $client->capturedMethod);
 		self::assertSame('api/v1/manufacturing/production-lines', $client->capturedUri);
 	}
@@ -98,7 +99,7 @@ class ProductionLineEndpointTest extends TestCase
 	 */
 	public function testGetProductionLine(): void
 	{
-		$body = ['id' => 'a', 'name' => 'Line A', 'description' => null, 'active' => true, 'inputPositionId' => null, 'outputPositionId' => null];
+		$body = ['id' => 'a', 'name' => 'Line A', 'description' => null, 'active' => true, 'inputPositionId' => null, 'outputPositionId' => null, 'warehouseId' => 'wh-1'];
 		$client = new StubClient(new Response($body, []));
 		$endpoint = new ProductionLineEndpoint($client);
 
@@ -106,6 +107,7 @@ class ProductionLineEndpointTest extends TestCase
 
 		self::assertSame('a', $item->getId());
 		self::assertSame('Line A', $item->getName());
+		self::assertSame('wh-1', $item->getWarehouseId());
 		self::assertSame('GET', $client->capturedMethod);
 		self::assertSame('api/v1/manufacturing/production-lines/a', $client->capturedUri);
 	}
@@ -117,20 +119,21 @@ class ProductionLineEndpointTest extends TestCase
 	 */
 	public function testCreateProductionLine(): void
 	{
-		$body = ['id' => 'a', 'name' => 'Line A', 'description' => 'desc', 'active' => true, 'inputPositionId' => 'in', 'outputPositionId' => 'out'];
+		$body = ['id' => 'a', 'name' => 'Line A', 'description' => 'desc', 'active' => true, 'inputPositionId' => 'in', 'outputPositionId' => 'out', 'warehouseId' => 'wh-1'];
 		$client = new StubClient(new Response($body, []));
 		$endpoint = new ProductionLineEndpoint($client);
 
-		$item = $endpoint->createProductionLine(CreateProductionLine::create('a', 'Line A', 'desc', true, 'in', 'out'));
+		$item = $endpoint->createProductionLine(CreateProductionLine::create('a', 'Line A', 'desc', true, 'in', 'out', 'wh-1'));
 
 		self::assertSame('a', $item->getId());
 		self::assertSame('Line A', $item->getName());
 		self::assertSame('in', $item->getInputPositionId());
 		self::assertSame('out', $item->getOutputPositionId());
+		self::assertSame('wh-1', $item->getWarehouseId());
 		self::assertSame('POST', $client->capturedMethod);
 		self::assertSame('api/v1/manufacturing/production-lines', $client->capturedUri);
 		self::assertSame(
-			['id' => 'a', 'name' => 'Line A', 'description' => 'desc', 'active' => true, 'inputPositionId' => 'in', 'outputPositionId' => 'out'],
+			['id' => 'a', 'name' => 'Line A', 'description' => 'desc', 'active' => true, 'inputPositionId' => 'in', 'outputPositionId' => 'out', 'warehouseId' => 'wh-1'],
 			$client->capturedOptions['json'] ?? null,
 		);
 	}
@@ -142,18 +145,20 @@ class ProductionLineEndpointTest extends TestCase
 	 */
 	public function testUpdateProductionLine(): void
 	{
-		$body = ['id' => 'a', 'name' => 'Line A updated', 'description' => null, 'active' => false, 'inputPositionId' => null, 'outputPositionId' => null];
+		$body = ['id' => 'a', 'name' => 'Line A updated', 'description' => null, 'active' => false, 'inputPositionId' => null, 'outputPositionId' => null, 'warehouseId' => 'wh-1'];
 		$client = new StubClient(new Response($body, []));
 		$endpoint = new ProductionLineEndpoint($client);
 
-		$item = $endpoint->updateProductionLine('a', UpdateProductionLine::create('Line A updated', active: false));
+		$item = $endpoint->updateProductionLine('a', UpdateProductionLine::create('Line A updated', active: false, warehouseId: 'wh-1'));
 
 		self::assertSame('Line A updated', $item->getName());
 		self::assertFalse($item->isActive());
+		self::assertSame('wh-1', $item->getWarehouseId());
 		self::assertSame('PUT', $client->capturedMethod);
 		self::assertSame('api/v1/manufacturing/production-lines/a', $client->capturedUri);
 		self::assertIsArray($client->capturedOptions['json'] ?? null);
 		self::assertArrayNotHasKey('id', $client->capturedOptions['json']);
+		self::assertSame('wh-1', $client->capturedOptions['json']['warehouseId'] ?? null);
 	}
 
 	/**

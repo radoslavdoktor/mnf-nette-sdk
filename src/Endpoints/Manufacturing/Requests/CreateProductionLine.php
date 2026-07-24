@@ -13,6 +13,7 @@ class CreateProductionLine implements IRequest
 		private readonly bool $active,
 		private readonly string|null $inputPositionId,
 		private readonly string|null $outputPositionId,
+		private readonly string|null $warehouseId,
 	)
 	{
 	}
@@ -24,9 +25,10 @@ class CreateProductionLine implements IRequest
 		bool $active = true,
 		string|null $inputPositionId = null,
 		string|null $outputPositionId = null,
+		string|null $warehouseId = null,
 	): self
 	{
-		return new self($id, $name, $description, $active, $inputPositionId, $outputPositionId);
+		return new self($id, $name, $description, $active, $inputPositionId, $outputPositionId, $warehouseId);
 	}
 
 	/**
@@ -41,6 +43,7 @@ class CreateProductionLine implements IRequest
 			'active' => $this->active,
 			'inputPositionId' => $this->inputPositionId,
 			'outputPositionId' => $this->outputPositionId,
+			'warehouseId' => $this->warehouseId,
 		];
 	}
 }

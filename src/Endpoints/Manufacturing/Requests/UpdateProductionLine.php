@@ -12,6 +12,7 @@ class UpdateProductionLine implements IRequest
 		private readonly bool $active,
 		private readonly string|null $inputPositionId,
 		private readonly string|null $outputPositionId,
+		private readonly string|null $warehouseId,
 	)
 	{
 	}
@@ -22,9 +23,10 @@ class UpdateProductionLine implements IRequest
 		bool $active = true,
 		string|null $inputPositionId = null,
 		string|null $outputPositionId = null,
+		string|null $warehouseId = null,
 	): self
 	{
-		return new self($name, $description, $active, $inputPositionId, $outputPositionId);
+		return new self($name, $description, $active, $inputPositionId, $outputPositionId, $warehouseId);
 	}
 
 	/**
@@ -38,6 +40,7 @@ class UpdateProductionLine implements IRequest
 			'active' => $this->active,
 			'inputPositionId' => $this->inputPositionId,
 			'outputPositionId' => $this->outputPositionId,
+			'warehouseId' => $this->warehouseId,
 		];
 	}
 }
